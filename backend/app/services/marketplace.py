@@ -31,9 +31,6 @@ GITHUB_API_BASE = (
 CACHE_TTL_SECONDS = 3600
 MAX_RECURSION_DEPTH = 5
 MAX_SKILL_FILES = 50
-
-_catalog_cache: list[MarketplacePluginDict] | None = None
-_catalog_cached_at: datetime | None = None
 SAFE_PATH_SEGMENT = re.compile(r"^[a-zA-Z0-9_\-\.]+$")
 
 
@@ -75,6 +72,9 @@ def _validate_component_name(name: str) -> str:
 
 
 class MarketplaceService:
+    _catalog_cache: list[MarketplacePluginDict] | None = None
+    _catalog_cached_at: datetime | None = None
+
     def __init__(self, github_token: str | None = None) -> None:
         self.cache_path = Path(settings.STORAGE_PATH) / "marketplace_cache"
         self.cache_path.mkdir(parents=True, exist_ok=True)
@@ -120,13 +120,11 @@ class MarketplaceService:
     async def fetch_catalog(
         self, force_refresh: bool = False
     ) -> list[MarketplacePluginDict]:
-        global _catalog_cache, _catalog_cached_at
-
         if not force_refresh and self._is_cache_valid():
-            return _catalog_cache or []
+            return MarketplaceService._catalog_cache or []
 
         if not force_refresh and self._load_disk_cache():
-            return _catalog_cache or []
+            return MarketplaceService._catalog_cache or []
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             try:
@@ -151,20 +149,20 @@ class MarketplaceService:
             and not p.get("has_lsp_only", False)
         ]
 
-        _catalog_cache = plugins
-        _catalog_cached_at = datetime.now(timezone.utc)
+        MarketplaceService._catalog_cache = plugins
+        MarketplaceService._catalog_cached_at = datetime.now(timezone.utc)
         self._save_disk_cache(plugins)
         return plugins
 
     def _is_cache_valid(self) -> bool:
-        global _catalog_cache, _catalog_cached_at
-        if _catalog_cache is None or _catalog_cached_at is None:
+        cls = MarketplaceService
+        if cls._catalog_cache is None or cls._catalog_cached_at is None:
             return False
-        expiry = _catalog_cached_at + timedelta(seconds=CACHE_TTL_SECONDS)
+        expiry = cls._catalog_cached_at + timedelta(seconds=CACHE_TTL_SECONDS)
         return datetime.now(timezone.utc) < expiry
 
     def _load_disk_cache(self) -> bool:
-        global _catalog_cache, _catalog_cached_at
+        cls = MarketplaceService
         try:
             if not self._cache_file.exists():
                 return False
@@ -175,8 +173,8 @@ class MarketplaceService:
             if cache_age.total_seconds() > CACHE_TTL_SECONDS:
                 return False
             with open(self._cache_file, "r") as f:
-                _catalog_cache = json.load(f)
-            _catalog_cached_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
+                cls._catalog_cache = json.load(f)
+            cls._catalog_cached_at = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
             return True
         except Exception as e:
             logger.warning(f"Failed to load disk cache: {e}")
