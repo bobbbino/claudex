@@ -48,7 +48,12 @@ const MCPToolInner: React.FC<MCPToolProps> = ({ tool }) => {
   );
   const hasInput = inputEntries.length > 0;
   const hasResult = Boolean(
-    tool.result && (Array.isArray(tool.result) ? tool.result.length > 0 : true),
+    tool.result &&
+    (Array.isArray(tool.result)
+      ? tool.result.length > 0
+      : typeof tool.result === 'object'
+        ? Object.keys(tool.result as object).length > 0
+        : true),
   );
   const hasDetails = hasInput || (hasResult && toolStatus === 'completed');
   const title = description ? `${formattedToolName}: ${description}` : formattedToolName;

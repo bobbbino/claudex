@@ -64,7 +64,7 @@ const ToolCardInner: React.FC<ToolCardProps> = ({
               ) : (
                 <ChevronRight className="h-3.5 w-3.5 text-text-tertiary dark:text-text-dark-tertiary" />
               ))}
-            {actions}
+            {!expandable && actions}
           </div>
         </div>
         {status === 'started' &&
