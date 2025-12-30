@@ -229,6 +229,12 @@ export const FileOperationTool: React.FC<FileOperationToolProps> = ({ tool, vari
     );
   };
 
+  const hasExpandableContent =
+    (variant === 'read' && tool.result && tool.status === 'completed') ||
+    (variant === 'edit' &&
+      (toDisplayString(tool.input?.old_string) || toDisplayString(tool.input?.new_string))) ||
+    (variant === 'write' && typeof tool.input?.content === 'string' && tool.input.content);
+
   return (
     <ToolCard
       icon={<Icon className="h-3.5 w-3.5 text-text-secondary dark:text-text-dark-tertiary" />}
@@ -236,6 +242,7 @@ export const FileOperationTool: React.FC<FileOperationToolProps> = ({ tool, vari
       title={`${config.titlePrefix} ${filePath}`}
       loadingContent={config.loadingContent}
       error={errorMessage}
+      expandable={Boolean(hasExpandableContent)}
     >
       {renderContent()}
     </ToolCard>
