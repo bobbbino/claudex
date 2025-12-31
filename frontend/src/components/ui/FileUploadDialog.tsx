@@ -64,7 +64,7 @@ export const FileUploadDialog = memo(function FileUploadDialog({
                   onRemoveFile={removeFile}
                   compact={true}
                 />
-                <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border transition-colors hover:bg-surface-secondary dark:border-border-dark dark:hover:bg-surface-dark-secondary">
+                <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border transition-colors hover:bg-surface-hover dark:border-border-dark dark:hover:bg-surface-dark-hover">
                   <Plus className="mb-1 h-6 w-6 text-text-tertiary dark:text-text-dark-tertiary" />
                   <span className="text-xs text-text-secondary dark:text-text-dark-secondary">
                     Add more
@@ -83,13 +83,13 @@ export const FileUploadDialog = memo(function FileUploadDialog({
           ) : (
             <div className="space-y-3">
               <div className="flex justify-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-secondary dark:bg-surface-dark">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-secondary dark:bg-surface-dark-secondary">
                   <Image className="h-5 w-5 text-text-tertiary dark:text-text-dark-tertiary" />
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-secondary dark:bg-surface-dark">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-secondary dark:bg-surface-dark-secondary">
                   <FileText className="h-5 w-5 text-text-tertiary dark:text-text-dark-tertiary" />
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-secondary dark:bg-surface-dark">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-secondary dark:bg-surface-dark-secondary">
                   <FileSpreadsheet className="h-5 w-5 text-text-tertiary dark:text-text-dark-tertiary" />
                 </div>
               </div>

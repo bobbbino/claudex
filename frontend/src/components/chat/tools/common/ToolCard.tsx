@@ -97,13 +97,13 @@ const ToolCardInner: React.FC<ToolCardProps> = ({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-lg border border-border bg-surface-secondary transition-all duration-200 dark:border-border-dark dark:bg-surface-dark-secondary ${className}`}
+      className={`group relative overflow-hidden rounded-lg border border-border bg-surface-tertiary transition-all duration-200 dark:border-border-dark dark:bg-surface-dark-tertiary ${className}`}
     >
       {hasExpandableContent ? (
         <button
           type="button"
           onClick={() => setExpanded((prev) => !prev)}
-          className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
+          className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-hover/50 dark:hover:bg-surface-dark-hover/50"
         >
           {headerContent}
         </button>

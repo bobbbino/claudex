@@ -25,13 +25,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const variantClasses: Record<Exclude<ButtonVariant, 'unstyled'>, string> = {
   primary: 'bg-brand-500 text-white shadow-sm hover:bg-brand-600 focus-visible:ring-brand-500/60',
   secondary:
-    'bg-surface-secondary text-text-primary hover:bg-surface-tertiary dark:bg-surface-dark-secondary dark:text-text-dark-primary dark:hover:bg-surface-dark-tertiary focus-visible:ring-brand-500/40',
+    'bg-surface-secondary text-text-primary hover:bg-surface-hover dark:bg-surface-dark-secondary dark:text-text-dark-primary dark:hover:bg-surface-dark-hover focus-visible:ring-brand-500/40',
   outline:
-    'border border-border text-text-primary hover:bg-surface-secondary dark:border-border-dark dark:text-text-dark-primary dark:hover:bg-surface-dark-tertiary focus-visible:ring-brand-500/40',
+    'border border-border text-text-primary hover:bg-surface-hover dark:border-border-dark dark:text-text-dark-primary dark:hover:bg-surface-dark-hover focus-visible:ring-brand-500/40',
   ghost:
-    'text-text-secondary hover:bg-surface-secondary dark:text-text-dark-secondary dark:hover:bg-surface-dark-tertiary focus-visible:ring-brand-500/30',
+    'text-text-secondary hover:bg-surface-hover dark:text-text-dark-secondary dark:hover:bg-surface-dark-hover focus-visible:ring-brand-500/30',
   destructive: 'bg-error-500 text-white hover:bg-error-600 focus-visible:ring-error-500/60',
-  link: 'text-brand-600 underline underline-offset-4 hover:text-brand-700 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 shadow-none',
+  link: 'text-brand-600 underline underline-offset-4 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 shadow-none',
   gradient:
     'relative overflow-hidden bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-lg hover:from-brand-700 hover:to-brand-800 focus-visible:ring-brand-500/60',
 };

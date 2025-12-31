@@ -6,12 +6,12 @@ export const Z_INDEX = {
 
 export const modalBackdropClass = 'fixed inset-0 bg-black/50 flex items-center justify-center p-4';
 export const modalContainerClass =
-  'bg-surface dark:bg-surface-dark rounded-xl w-full overflow-hidden';
+  'bg-surface-secondary dark:bg-surface-dark-secondary rounded-xl w-full overflow-hidden';
 
 export const closeButtonClass =
   'p-1 text-text-tertiary hover:text-text-secondary dark:hover:text-text-dark-primary rounded-lg transition-colors';
 export const cancelButtonClass =
-  'px-4 py-2 text-text-secondary dark:text-text-dark-secondary hover:bg-surface-secondary dark:hover:bg-surface-dark-secondary rounded-lg transition-colors';
+  'px-4 py-2 text-text-secondary dark:text-text-dark-secondary hover:bg-surface-hover dark:hover:bg-surface-dark-hover rounded-lg transition-colors';
 
 export const modalSizes = {
   sm: 'max-w-sm',

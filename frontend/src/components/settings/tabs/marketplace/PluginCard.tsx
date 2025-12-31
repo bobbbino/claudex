@@ -9,14 +9,15 @@ interface PluginCardProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  development: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  productivity: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+  development: 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300',
+  productivity: 'bg-success-100 text-success-700 dark:bg-success-900/30 dark:text-success-300',
   testing: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
   database: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
-  deployment: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
-  security: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300',
+  deployment: 'bg-error-100 text-error-700 dark:bg-error-900/30 dark:text-error-300',
+  security: 'bg-warning-100 text-warning-700 dark:bg-warning-900/30 dark:text-warning-300',
   design: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
-  other: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  other:
+    'bg-surface-tertiary text-text-secondary dark:bg-surface-dark-tertiary dark:text-text-dark-secondary',
 };
 
 export const PluginCard: React.FC<PluginCardProps> = ({ plugin, isInstalled, onClick }) => {
@@ -25,7 +26,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, isInstalled, onC
   return (
     <button
       onClick={onClick}
-      className="border-border-primary bg-surface-primary dark:border-border-dark-primary dark:bg-surface-dark-primary group flex w-full flex-col rounded-lg border p-4 text-left transition-all hover:border-brand-500 hover:shadow-md dark:hover:border-brand-400"
+      className="group flex w-full flex-col rounded-lg border border-border bg-surface-tertiary p-4 text-left transition-all hover:border-brand-500 hover:shadow-md dark:border-border-dark dark:bg-surface-dark-tertiary dark:hover:border-brand-400"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -46,7 +47,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, isInstalled, onC
           )}
         </div>
         {plugin.version && (
-          <span className="flex-shrink-0 rounded bg-surface-secondary px-1.5 py-0.5 text-xs text-text-secondary dark:bg-surface-dark-secondary dark:text-text-dark-secondary">
+          <span className="flex-shrink-0 rounded bg-surface-tertiary px-1.5 py-0.5 text-xs text-text-secondary dark:bg-surface-dark-tertiary dark:text-text-dark-secondary">
             v{plugin.version}
           </span>
         )}
