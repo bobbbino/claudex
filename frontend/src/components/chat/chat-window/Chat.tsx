@@ -125,7 +125,6 @@ export const Chat = memo(function Chat({
     };
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Preserve scroll position when older messages are prepended
   useLayoutEffect(() => {
     const container = chatWindowRef.current;
     if (container && prevScrollHeight.current > 0 && !isInitialLoading) {
@@ -137,7 +136,6 @@ export const Chat = memo(function Chat({
     }
   }, [messages.length, isInitialLoading]);
 
-  // Initial scroll to bottom when messages first load
   useLayoutEffect(() => {
     const container = chatWindowRef.current;
     if (container && !isInitialLoading && messages.length > 0 && !hasScrolledToBottom.current) {
@@ -147,7 +145,6 @@ export const Chat = memo(function Chat({
     }
   }, [chatId, isInitialLoading, messages]);
 
-  // Auto-scroll during streaming when user is near bottom
   useEffect(() => {
     if (isStreaming && isNearBottomRef.current && chatWindowRef.current) {
       chatWindowRef.current.scrollTo({

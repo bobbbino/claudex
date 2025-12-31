@@ -248,7 +248,3 @@ class MarketplaceException(ServiceException):
         status_code: int = 400,
     ):
         super().__init__(message, error_code, details, status_code)
-
-
-class InvalidCursorError(ValueError):
-    pass
