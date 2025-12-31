@@ -39,7 +39,6 @@ export function useMessageCache({ chatId, queryClient }: UseMessageCacheParams) 
         (oldData: { pages: PaginatedMessages[]; pageParams: unknown[] } | undefined) => {
           if (!oldData?.pages || oldData.pages.length === 0) return oldData;
 
-          // With DESC ordering, first page contains newest messages
           const newFirstPageItems = [...oldData.pages[0].items];
 
           if (userMessage && !newFirstPageItems.some((msg) => msg.id === userMessage.id)) {

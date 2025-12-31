@@ -17,8 +17,8 @@ from app.models.db_models import (
 from app.models.schemas import CursorPaginatedMessages
 from app.models.types import MessageAttachmentDict
 from app.services.base import BaseDbService, SessionFactoryType
-from app.services.exceptions import MessageException, ErrorCode
-from app.utils.cursor import encode_cursor, decode_cursor, InvalidCursorError
+from app.services.exceptions import MessageException, ErrorCode, InvalidCursorError
+from app.utils.cursor import encode_cursor, decode_cursor
 
 settings = get_settings()
 logger = logging.getLogger(__name__)

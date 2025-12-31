@@ -2,9 +2,7 @@ import base64
 from datetime import datetime
 from uuid import UUID
 
-
-class InvalidCursorError(ValueError):
-    pass
+from app.services.exceptions import InvalidCursorError
 
 
 def encode_cursor(created_at: datetime, id: UUID) -> str:

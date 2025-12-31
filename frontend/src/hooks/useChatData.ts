@@ -25,10 +25,12 @@ export function useChatData(chatId: string | undefined): UseChatDataResult {
   );
   const fetchedMessages = useMemo(() => {
     if (!messagesQuery.data?.pages) return [];
-    // Reverse pages (oldest page first) and items within each page (oldest message first)
+    // Backend returns pages in DESC order (newest first). To display chronologically:
+    // 1. Reverse pages array so oldest page comes first
+    // 2. Reverse items within each page so oldest message comes first
+    // Result: [oldest...newest] for proper chat display order
     const reversedPages = [...messagesQuery.data.pages].reverse();
     const allMessages = reversedPages.flatMap((page) => [...page.items].reverse());
-    // Deduplicate by message ID
     const seen = new Set<string>();
     return allMessages.filter((msg) => {
       if (seen.has(msg.id)) return false;
