@@ -6,7 +6,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.models.db_models import Chat, Message, MessageAttachment, User
-from app.models.db_models.enums import MessageRole, MessageStreamStatus
+from app.models.db_models.enums import AttachmentType, MessageRole, MessageStreamStatus
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.sandbox import SandboxService
 from app.core.security import get_password_hash
@@ -721,9 +721,9 @@ class TestForkChat:
         attachment = MessageAttachment(
             message_id=msg_with_attachment.id,
             file_url="",
-            file_path="/home/user/test.txt",
-            file_type="text/plain",
-            filename="test.txt",
+            file_path="/home/user/test.png",
+            file_type=AttachmentType.IMAGE,
+            filename="test.png",
         )
         db_session.add(attachment)
         await db_session.flush()
@@ -771,7 +771,7 @@ class TestForkChat:
             m for m in copied_messages if m["content"] == "First user message"
         )
         assert len(first_msg["attachments"]) == 1
-        assert first_msg["attachments"][0]["filename"] == "test.txt"
+        assert first_msg["attachments"][0]["filename"] == "test.png"
         assert first_msg["attachments"][0]["file_url"] != attachment.file_url
 
     async def test_fork_chat_not_found_and_access_errors(

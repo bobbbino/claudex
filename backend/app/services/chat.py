@@ -614,7 +614,7 @@ class ChatService(BaseDbService[Chat]):
 
             except Exception:
                 try:
-                    await fork_sandbox_service.destroy_sandbox(new_sandbox_id)
+                    await fork_sandbox_service.delete_sandbox(new_sandbox_id)
                 except Exception:
                     pass
                 raise
