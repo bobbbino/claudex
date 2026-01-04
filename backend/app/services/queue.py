@@ -1,7 +1,7 @@
 import json
 import logging
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from uuid import UUID, uuid4
 
 from redis.asyncio import Redis
@@ -171,8 +171,4 @@ class QueueService:
         if not raw:
             return None
 
-        return json.loads(raw)
-
-    async def has_messages(self, chat_id: str) -> bool:
-        key = self._queue_key(chat_id)
-        return await self.redis.exists(key) > 0
+        return cast(dict[str, Any], json.loads(raw))

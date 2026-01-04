@@ -295,7 +295,6 @@ class StreamOrchestrator:
             logger.warning("Failed to create checkpoint: %s", exc)
 
     async def _process_queue_if_available(self, ctx: StreamContext) -> bool:
-        """Check for queued messages and process the next one if available."""
         try:
             next_msg = await self._pop_next_queued_message(ctx.chat_id)
             if not next_msg:
@@ -325,11 +324,8 @@ class StreamOrchestrator:
             return False
 
     async def _pop_next_queued_message(self, chat_id: str) -> dict[str, Any] | None:
-        """Pop the next message from the queue if available."""
         async with redis_connection() as redis:
             queue_service = QueueService(redis)
-            if not await queue_service.has_messages(chat_id):
-                return None
             return await queue_service.pop_next_message(chat_id)
 
     async def _create_queue_messages(
@@ -337,7 +333,6 @@ class StreamOrchestrator:
         ctx: StreamContext,
         next_msg: dict[str, Any],
     ) -> tuple[Message, Message] | None:
-        """Create user and assistant message records for the queued message."""
         message_service = MessageService(session_factory=ctx.session_factory)
 
         attachments = next_msg.get("attachments")
@@ -380,7 +375,6 @@ class StreamOrchestrator:
         next_msg: dict[str, Any],
         assistant_message: Message,
     ) -> None:
-        """Spawn Celery task to process the queued message."""
         from app.tasks.chat_processor import process_chat
 
         user_service = UserService(session_factory=ctx.session_factory)

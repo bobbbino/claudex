@@ -33,9 +33,6 @@ class QueueInjector:
     async def check_and_inject(self) -> str | None:
         async with redis_connection() as redis:
             queue_service = QueueService(redis)
-            if not await queue_service.has_messages(self.chat_id):
-                return None
-
             queued_msg = await queue_service.pop_next_message(self.chat_id)
             if not queued_msg:
                 return None
@@ -129,6 +126,7 @@ class QueueInjector:
 
     @staticmethod
     def should_try_injection(event: StreamEvent) -> bool:
+        # Only inject after top-level tool completions to avoid interrupting nested tool execution
         if event.get("type") != "tool_completed":
             return False
 

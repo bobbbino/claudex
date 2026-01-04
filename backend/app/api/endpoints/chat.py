@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
-from typing import Any, Literal
+from typing import Any, Literal, cast
 from uuid import UUID
 
 from celery.exceptions import NotRegistered
@@ -25,6 +25,7 @@ from app.core.config import get_settings
 from app.core.deps import get_chat_service
 from app.core.security import get_current_user
 from app.models.db_models import User, MessageStreamStatus
+from app.models.types import MessageAttachmentDict
 from app.models.schemas import (
     Chat as ChatSchema,
     ChatCompletionResponse,
@@ -743,7 +744,7 @@ async def queue_message(
             detail="Chat not found or access denied",
         )
 
-    attachments: list[dict[str, Any]] | None = None
+    attachments: list[MessageAttachmentDict] | None = None
     if attached_files:
         attachments = list(
             await asyncio.gather(
@@ -761,13 +762,16 @@ async def queue_message(
     try:
         async with redis_connection() as redis:
             queue_service = QueueService(redis)
-            return await queue_service.upsert_message(
-                str(chat_id),
-                content,
-                model_id,
-                permission_mode=permission_mode,
-                thinking_mode=thinking_mode,
-                attachments=attachments,
+            return cast(
+                QueueUpsertResponse,
+                await queue_service.upsert_message(
+                    str(chat_id),
+                    content,
+                    model_id,
+                    permission_mode=permission_mode,
+                    thinking_mode=thinking_mode,
+                    attachments=attachments,
+                ),
             )
     except RedisError as e:
         logger.error("Redis error queueing message: %s", e, exc_info=True)
@@ -821,7 +825,7 @@ async def update_queued_message(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="No queued message found",
                 )
-            return result
+            return cast(QueuedMessage, result)
     except RedisError as e:
         logger.error("Redis error updating queued message: %s", e, exc_info=True)
         raise HTTPException(
