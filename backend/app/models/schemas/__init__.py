@@ -39,10 +39,13 @@ from .pagination import (
 from .permissions import PermissionRequest, PermissionRequestResponse, PermissionResult
 from .sandbox import (
     AddSecretRequest,
+    BrowserStatusResponse,
+    BrowserUrlResponse,
     FileContentResponse,
     FileMetadata,
     IDEUrlResponse,
     SandboxFilesMetadataResponse,
+    StartBrowserRequest,
     UpdateFileRequest,
     UpdateFileResponse,
     UpdateIDEThemeRequest,
@@ -123,10 +126,13 @@ __all__ = [
     "PermissionResult",
     # sandbox
     "AddSecretRequest",
+    "BrowserStatusResponse",
+    "BrowserUrlResponse",
     "FileContentResponse",
     "FileMetadata",
     "IDEUrlResponse",
     "SandboxFilesMetadataResponse",
+    "StartBrowserRequest",
     "UpdateFileRequest",
     "UpdateFileResponse",
     "UpdateIDEThemeRequest",

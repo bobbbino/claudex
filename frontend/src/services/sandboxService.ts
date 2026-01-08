@@ -160,6 +160,66 @@ async function getIDEUrl(sandboxId: string): Promise<string | null> {
   }
 }
 
+interface BrowserUrlResponse {
+  vnc_url: string | null;
+  ws_url: string | null;
+  status: 'running' | 'stopped' | 'starting';
+}
+
+interface BrowserStatus {
+  running: boolean;
+  current_url?: string;
+}
+
+async function getVNCUrl(sandboxId: string): Promise<string | null> {
+  validateRequired(sandboxId, 'Sandbox ID');
+
+  try {
+    return await serviceCall(async () => {
+      const response = await apiClient.get<BrowserUrlResponse>(`/sandbox/${sandboxId}/vnc-url`);
+      return response?.ws_url ?? null;
+    });
+  } catch (error) {
+    logger.error('VNC URL fetch failed', 'sandboxService', error);
+    return null;
+  }
+}
+
+async function startBrowser(
+  sandboxId: string,
+  url: string = 'about:blank',
+  width: number = 1920,
+  height: number = 1080,
+): Promise<BrowserStatus> {
+  validateRequired(sandboxId, 'Sandbox ID');
+
+  return serviceCall(async () => {
+    const response = await apiClient.post<BrowserStatus>(`/sandbox/${sandboxId}/browser/start`, {
+      url,
+      width,
+      height,
+    });
+    return response ?? { running: true, current_url: url };
+  });
+}
+
+async function stopBrowser(sandboxId: string): Promise<void> {
+  validateRequired(sandboxId, 'Sandbox ID');
+
+  await serviceCall(async () => {
+    await apiClient.post(`/sandbox/${sandboxId}/browser/stop`);
+  });
+}
+
+async function getBrowserStatus(sandboxId: string): Promise<BrowserStatus> {
+  validateRequired(sandboxId, 'Sandbox ID');
+
+  return serviceCall(async () => {
+    const response = await apiClient.get<BrowserStatus>(`/sandbox/${sandboxId}/browser/status`);
+    return response ?? { running: false };
+  });
+}
+
 export const sandboxService = {
   getPreviewLinks,
   getSandboxFilesMetadata,
@@ -172,4 +232,8 @@ export const sandboxService = {
   downloadZip,
   updateIDETheme,
   getIDEUrl,
+  getVNCUrl,
+  startBrowser,
+  stopBrowser,
+  getBrowserStatus,
 };

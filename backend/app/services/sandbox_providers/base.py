@@ -491,6 +491,9 @@ class SandboxProvider(ABC):
     async def get_ide_url(self, sandbox_id: str) -> str | None:
         pass
 
+    async def get_vnc_url(self, sandbox_id: str) -> str | None:
+        return None
+
     async def __aenter__(self) -> "SandboxProvider":
         return self
 

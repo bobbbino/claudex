@@ -127,6 +127,38 @@ class SandboxService:
     async def get_ide_url(self, sandbox_id: str) -> str | None:
         return await self.provider.get_ide_url(sandbox_id)
 
+    async def get_vnc_url(self, sandbox_id: str) -> str | None:
+        return await self.provider.get_vnc_url(sandbox_id)
+
+    async def start_browser(
+        self,
+        sandbox_id: str,
+        url: str = "about:blank",
+        width: int = 1920,
+        height: int = 1080,
+    ) -> dict[str, str]:
+        escaped_url = shlex.quote(url)
+        browser_cmd = (
+            f"DISPLAY=:99 chromium-browser --no-sandbox --disable-gpu "
+            f"--disable-dev-shm-usage --window-size={width},{height} "
+            f"--start-maximized {escaped_url}"
+        )
+        await self.execute_command(sandbox_id, browser_cmd, background=True)
+        logger.info("Browser started for sandbox %s with URL: %s", sandbox_id, url)
+        return {"status": "starting", "url": url}
+
+    async def stop_browser(self, sandbox_id: str) -> dict[str, str]:
+        await self.execute_command(sandbox_id, "pkill -f chromium", background=True)
+        logger.info("Browser stopped for sandbox %s", sandbox_id)
+        return {"status": "stopped"}
+
+    async def get_browser_status(self, sandbox_id: str) -> dict[str, bool]:
+        result = await self.execute_command(
+            sandbox_id, "pgrep -f chromium > /dev/null && echo 'running' || echo 'stopped'"
+        )
+        running = "running" in result
+        return {"running": running}
+
     async def create_pty_session(
         self, sandbox_id: str, rows: int = 24, cols: int = 80
     ) -> dict[str, Any]:
@@ -468,20 +500,19 @@ class SandboxService:
         )
         logger.info("Anthropic Bridge started: %s", start_result)
 
-    async def _start_openvscode_server(self, sandbox_id: str) -> None:
+    async def _setup_openvscode_settings(self, sandbox_id: str) -> None:
         settings_content = json.dumps(OPENVSCODE_DEFAULT_SETTINGS, indent=2)
         escaped_settings = settings_content.replace("'", "'\"'\"'")
 
+        # Setup settings and start server if not already running (for non-Docker providers)
         setup_and_start_cmd = (
             f"mkdir -p {OPENVSCODE_SETTINGS_DIR} && "
             f"echo '{escaped_settings}' > {OPENVSCODE_SETTINGS_PATH} && "
+            f"pgrep -f 'openvscode-server.*{OPENVSCODE_PORT}' > /dev/null || "
             f"openvscode-server --host 0.0.0.0 --port {OPENVSCODE_PORT} "
-            "--without-connection-token --disable-telemetry"
+            "--without-connection-token --disable-telemetry &"
         )
-        result = await self.execute_command(
-            sandbox_id, setup_and_start_cmd, background=True
-        )
-        logger.info("OpenVSCode Server started: %s", result)
+        await self.execute_command(sandbox_id, setup_and_start_cmd, background=True)
 
     async def update_ide_theme(self, sandbox_id: str, theme: str) -> None:
         vscode_theme = (
@@ -537,7 +568,7 @@ class SandboxService:
         is_fork: bool = False,
     ) -> None:
         tasks: list[Coroutine[None, None, None]] = [
-            self._start_openvscode_server(sandbox_id),
+            self._setup_openvscode_settings(sandbox_id),
         ]
 
         # Forks skip filesystem-based setup (env vars in .bashrc, config files, skills/commands/agents)
