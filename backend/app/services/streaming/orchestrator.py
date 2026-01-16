@@ -12,14 +12,14 @@ from uuid import UUID
 from celery.exceptions import Ignore
 from sqlalchemy import select
 
-from app.core.config import get_settings
 from app.db.session import get_celery_session
 from app.models.db_models import Chat, Message, MessageRole, MessageStreamStatus, User
 from app.prompts.system_prompt import build_system_prompt_for_chat
-from app.services.exceptions import ClaudeAgentException
+from app.services.exceptions import ClaudeAgentException, UserException
 from app.services.message import MessageService
 from app.services.queue import QueueService, serialize_message_attachments
-from app.services.sandbox import DockerConfig, LocalDockerProvider, SandboxService
+from app.services.sandbox import SandboxService
+from app.services.sandbox_providers import create_sandbox_provider
 from app.services.streaming.cancellation import CancellationHandler, StreamCancelled
 from app.services.streaming.events import StreamEvent
 from app.services.streaming.publisher import StreamPublisher
@@ -549,16 +549,21 @@ async def initialize_and_run_chat(
     is_queue_continuation: bool = False,
 ) -> str:
     async with get_celery_session() as (SessionFactory, _):
-        settings = get_settings()
-        docker_config = DockerConfig(
-            image=settings.DOCKER_IMAGE,
-            network=settings.DOCKER_NETWORK,
-            host=settings.DOCKER_HOST,
-            preview_base_url=settings.DOCKER_PREVIEW_BASE_URL,
-            sandbox_domain=settings.DOCKER_SANDBOX_DOMAIN,
-            traefik_network=settings.DOCKER_TRAEFIK_NETWORK,
-        )
-        provider = LocalDockerProvider(config=docker_config)
+        async with SessionFactory() as db:
+            user_id = UUID(chat_data["user_id"])
+            user_service = UserService(session_factory=SessionFactory)
+
+            try:
+                user_settings = await user_service.get_user_settings(user_id, db=db)
+            except UserException:
+                raise UserException("User settings not found")
+
+            provider_type = user_settings.sandbox_provider
+            provider = create_sandbox_provider(
+                provider_type=provider_type,
+                api_key=user_settings.e2b_api_key,
+            )
+
         sandbox_service = SandboxService(
             provider=provider, session_factory=SessionFactory
         )

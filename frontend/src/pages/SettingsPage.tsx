@@ -35,7 +35,7 @@ import { CommandEditDialog } from '@/components/settings/dialogs/CommandEditDial
 import { PromptsSettingsTab } from '@/components/settings/tabs/PromptsSettingsTab';
 import { PromptEditDialog } from '@/components/settings/dialogs/PromptEditDialog';
 import { MarketplaceSettingsTab } from '@/components/settings/tabs/MarketplaceSettingsTab';
-import type { ApiFieldKey, CustomPrompt } from '@/types';
+import type { ApiFieldKey, CustomPrompt, SandboxProviderType } from '@/types';
 import { useModelsQuery } from '@/hooks/queries';
 import { useCrudForm } from '@/hooks/useCrudForm';
 import { useTaskManagement } from '@/hooks/useTaskManagement';
@@ -74,6 +74,8 @@ const createFallbackSettings = (): UserSettings => ({
   claude_code_oauth_token: null,
   z_ai_api_key: null,
   openrouter_api_key: null,
+  e2b_api_key: null,
+  sandbox_provider: null,
   codex_auth_json: null,
   custom_instructions: null,
   custom_agents: null,
@@ -94,6 +96,8 @@ const TAB_FIELDS: Record<TabKey, (keyof UserSettings)[]> = {
     'claude_code_oauth_token',
     'z_ai_api_key',
     'openrouter_api_key',
+    'e2b_api_key',
+    'sandbox_provider',
     'codex_auth_json',
     'auto_compact_disabled',
   ],
@@ -184,6 +188,8 @@ const SettingsPage: React.FC = () => {
         'claude_code_oauth_token',
         'z_ai_api_key',
         'openrouter_api_key',
+        'e2b_api_key',
+        'sandbox_provider',
         'codex_auth_json',
         'custom_instructions',
         'custom_agents',
@@ -318,6 +324,7 @@ const SettingsPage: React.FC = () => {
     claude_code_oauth_token: false,
     z_ai_api_key: false,
     openrouter_api_key: false,
+    e2b_api_key: false,
   });
 
   const hasUnsavedChanges = useMemo(() => {
@@ -393,6 +400,10 @@ const SettingsPage: React.FC = () => {
 
   const handleCodexAuthChange = (content: string | null) => {
     persistSettings((prev) => ({ ...prev, codex_auth_json: content }));
+  };
+
+  const handleSandboxProviderChange = (provider: SandboxProviderType) => {
+    persistSettings((prev) => ({ ...prev, sandbox_provider: provider }));
   };
 
   const sidebarContent = useMemo(
@@ -547,6 +558,7 @@ const SettingsPage: React.FC = () => {
                     onNotificationSoundChange={handleNotificationSoundChange}
                     onAutoCompactDisabledChange={handleAutoCompactDisabledChange}
                     onCodexAuthChange={handleCodexAuthChange}
+                    onSandboxProviderChange={handleSandboxProviderChange}
                   />
                 </div>
               )}

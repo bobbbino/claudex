@@ -106,18 +106,13 @@ async def create_and_initialize_sandbox(
     user: User,
     session_factory: Any,
 ) -> tuple[SandboxService, str]:
-    from app.services.sandbox import DockerConfig, LocalDockerProvider, SandboxService
+    from app.services.sandbox import SandboxService
+    from app.services.sandbox_providers import create_sandbox_provider
 
-    docker_config = DockerConfig(
-        image=settings.DOCKER_IMAGE,
-        network=settings.DOCKER_NETWORK,
-        host=settings.DOCKER_HOST,
-        preview_base_url=settings.DOCKER_PREVIEW_BASE_URL,
-        sandbox_domain=settings.DOCKER_SANDBOX_DOMAIN,
-        traefik_network=settings.DOCKER_TRAEFIK_NETWORK,
+    provider = create_sandbox_provider(
+        provider_type=user_settings.sandbox_provider,
+        api_key=user_settings.e2b_api_key,
     )
-
-    provider = LocalDockerProvider(config=docker_config)
     sandbox_service = SandboxService(provider, session_factory=session_factory)
     sandbox_id = await sandbox_service.create_sandbox()
 

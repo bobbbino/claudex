@@ -21,8 +21,11 @@ from app.models.types import (
 from app.services.agent import AgentService
 from app.services.command import CommandService
 from app.services.exceptions import SandboxException
-from app.services.sandbox.provider import SandboxProvider
-from app.services.sandbox.types import CommandResult, PtySize
+from app.services.sandbox_providers import (
+    PtySize,
+    SandboxProvider,
+)
+from app.services.sandbox_providers.types import CommandResult
 from app.services.skill import SkillService
 from app.utils.queue import drain_queue, put_with_overflow
 
@@ -572,6 +575,8 @@ class SandboxService:
             self._start_openvscode_server(sandbox_id),
         ]
 
+        # Forks skip filesystem-based setup (env vars in .bashrc, config files, skills/commands/agents)
+        # since these are preserved when cloning the container. Only processes need restarting.
         if not is_fork:
             tasks.append(self._setup_claude_config(sandbox_id, auto_compact_disabled))
 
@@ -632,6 +637,10 @@ class SandboxService:
     async def _enqueue_pty_output(
         self, data: bytes, output_queue: "asyncio.Queue[str]"
     ) -> None:
+        # Handles PTY output with backpressure management.
+        # When the queue is full (consumer not keeping up), we drop the oldest item
+        # rather than blocking or losing the newest data. This prevents the PTY from
+        # stalling while ensuring the most recent output is always available.
         try:
             decoded = data.decode("utf-8", errors="replace")
             put_with_overflow(output_queue, decoded)
@@ -649,6 +658,10 @@ class SandboxService:
         session_file = f"/home/user/.claude/projects/-home-user/{session_id}.jsonl"
         temp_file = f"{session_file}.tmp"
 
+        # Valid Anthropic signatures are base64-encoded encrypted content, typically 200+ characters.
+        # OpenRouter generates empty signatures (length 0).
+        # ZAI generates short/fake signatures that pass basic checks but fail Anthropic validation.
+        # Using 100 as threshold filters out both while keeping valid Anthropic signatures.
         min_signature_length = 100
         jq_filter = (
             'if .message.content and (.message.content | type) == "array" then '

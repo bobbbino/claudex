@@ -16,7 +16,13 @@ from app.db.session import SessionLocal
 from sqlalchemy import select
 
 from app.models.db_models import Chat, User
-from app.services.sandbox import DockerConfig, LocalDockerProvider, SandboxService
+from app.services.exceptions import UserException
+from app.services.sandbox import SandboxService
+from app.services.sandbox_providers import (
+    SandboxProviderType,
+    create_sandbox_provider,
+)
+from app.services.user import UserService
 from app.utils.queue import drain_queue, put_with_overflow
 
 settings = get_settings()
@@ -24,35 +30,51 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-async def authenticate_user(token: str) -> User | None:
+async def authenticate_user(token: str) -> tuple[User | None, str | None, str]:
     try:
         async with SessionLocal() as db:
-            return await get_user_from_token(token, db)
+            user = await get_user_from_token(token, db)
+            if not user:
+                return None, None, "docker"
+
+            user_service = UserService(session_factory=SessionLocal)
+            try:
+                user_settings = await user_service.get_user_settings(user.id, db=db)
+                e2b_api_key = user_settings.e2b_api_key
+                sandbox_provider = user_settings.sandbox_provider
+            except UserException:
+                e2b_api_key = None
+                sandbox_provider = "docker"
+
+        return user, e2b_api_key, sandbox_provider
+
     except Exception as e:
         logger.warning("WebSocket authentication failed: %s", e)
-        return None
+        return None, None, "docker"
 
 
-async def wait_for_auth(websocket: WebSocket, timeout: float = 10.0) -> User | None:
+async def wait_for_auth(
+    websocket: WebSocket, timeout: float = 10.0
+) -> tuple[User | None, str | None, str]:
     try:
         message = await asyncio.wait_for(websocket.receive(), timeout=timeout)
     except asyncio.TimeoutError:
-        return None
+        return None, None, "docker"
 
     if "text" not in message:
-        return None
+        return None, None, "docker"
 
     try:
         data = json.loads(message["text"])
     except json.JSONDecodeError:
-        return None
+        return None, None, "docker"
 
     if data.get("type") != "auth":
-        return None
+        return None, None, "docker"
 
     token = data.get("token")
     if not token:
-        return None
+        return None, None, "docker"
 
     return await authenticate_user(token)
 
@@ -171,13 +193,13 @@ async def terminal_websocket(
 ) -> None:
     await websocket.accept()
 
-    user = await wait_for_auth(websocket)
+    user, e2b_api_key, user_sandbox_provider = await wait_for_auth(websocket)
     if not user:
         await websocket.close(code=4001, reason="Authentication failed")
         return
 
     async with SessionLocal() as db:
-        query = select(Chat.sandbox_id).where(
+        query = select(Chat.sandbox_provider).where(
             Chat.sandbox_id == sandbox_id,
             Chat.user_id == user.id,
             Chat.deleted_at.is_(None),
@@ -187,16 +209,17 @@ async def terminal_websocket(
         if not row:
             await websocket.close(code=4004, reason="Sandbox not found")
             return
+        sandbox_provider_type = row.sandbox_provider or user_sandbox_provider
 
-    docker_config = DockerConfig(
-        image=settings.DOCKER_IMAGE,
-        network=settings.DOCKER_NETWORK,
-        host=settings.DOCKER_HOST,
-        preview_base_url=settings.DOCKER_PREVIEW_BASE_URL,
-        sandbox_domain=settings.DOCKER_SANDBOX_DOMAIN,
-        traefik_network=settings.DOCKER_TRAEFIK_NETWORK,
-    )
-    provider = LocalDockerProvider(config=docker_config)
+    if sandbox_provider_type == SandboxProviderType.E2B and not e2b_api_key:
+        await websocket.close(
+            code=4003,
+            reason="E2B API key is required. Please configure your E2B API key in Settings.",
+        )
+        return
+
+    provider = create_sandbox_provider(sandbox_provider_type, e2b_api_key)
+
     sandbox_service = SandboxService(provider)
     session = TerminalSession(sandbox_service, sandbox_id, websocket)
 

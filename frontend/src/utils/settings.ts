@@ -130,4 +130,15 @@ export const getGeneralSecretFields = (): GeneralSecretFieldConfig[] => [
       href: 'https://openrouter.ai/keys',
     },
   },
+  {
+    key: 'e2b_api_key',
+    label: 'E2B API Key',
+    description: 'API key for E2B cloud sandbox provider',
+    placeholder: 'e2b_xxxxxxxxxxxxxxxxxxxx',
+    helperText: {
+      prefix: 'Get your API key from',
+      anchorText: 'E2B Dashboard',
+      href: 'https://e2b.dev/dashboard',
+    },
+  },
 ];
