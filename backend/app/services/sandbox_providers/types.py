@@ -1,5 +1,11 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Callable, Coroutine
+
+
+class SandboxProviderType(str, Enum):
+    E2B = "e2b"
+    DOCKER = "docker"
 
 
 @dataclass
@@ -60,7 +66,7 @@ class SecretEntry:
 
 @dataclass
 class DockerConfig:
-    image: str = "ghcr.io/mng-dev-ai/claudex-sandbox:latest"
+    image: str = "claudex-sandbox:latest"
     network: str = "claudex-sandbox-net"
     host: str | None = None
     preview_base_url: str = "http://localhost"

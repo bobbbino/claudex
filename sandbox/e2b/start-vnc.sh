@@ -10,7 +10,7 @@ export DISPLAY=:${DISPLAY_NUM}
 pgrep -f "Xvfb :${DISPLAY_NUM}" > /dev/null && exit 0
 
 Xvfb :${DISPLAY_NUM} -screen 0 ${RESOLUTION} -ac +extension RANDR &
-x11vnc -display :${DISPLAY_NUM} -forever -shared -nopw -xrandr newfbsize -listen 0.0.0.0 -rfbport ${VNC_PORT} -bg
+x11vnc -display :${DISPLAY_NUM} -forever -shared -nopw -listen 0.0.0.0 -rfbport ${VNC_PORT} -bg
 websockify 0.0.0.0:${WS_PORT} 127.0.0.1:${VNC_PORT} &
 
 chromium --no-sandbox --disable-gpu --disable-dev-shm-usage \

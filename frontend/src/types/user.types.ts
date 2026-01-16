@@ -74,6 +74,8 @@ export interface CustomPrompt {
   content: string;
 }
 
+export type SandboxProviderType = 'docker' | 'e2b';
+
 export interface UserSettings {
   id: string;
   user_id: string;
@@ -81,6 +83,8 @@ export interface UserSettings {
   claude_code_oauth_token: string | null;
   z_ai_api_key: string | null;
   openrouter_api_key: string | null;
+  e2b_api_key: string | null;
+  sandbox_provider: SandboxProviderType | null;
   codex_auth_json: string | null;
   custom_instructions: string | null;
   custom_agents: CustomAgent[] | null;

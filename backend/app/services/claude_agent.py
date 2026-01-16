@@ -20,7 +20,9 @@ from app.models.db_models.enums import ModelProvider
 from app.prompts.enhance_prompt import get_enhance_prompt
 from app.services.ai_model import AIModelService
 from app.services.exceptions import ClaudeAgentException
-from app.services.sandbox import DockerConfig, DockerSandboxTransport
+from app.services.sandbox_providers import SandboxProviderType, create_docker_config
+from app.services.transports import DockerSandboxTransport, E2BSandboxTransport
+from app.utils.validators import APIKeyValidationError, validate_e2b_api_key
 from app.services.streaming.events import StreamEvent
 from app.services.streaming.processor import StreamProcessor
 from app.services.tool_handler import ToolHandlerRegistry
@@ -84,23 +86,14 @@ class SessionHandler:
             self.session_callback(new_session_id)
 
 
-def _create_docker_config() -> DockerConfig:
-    return DockerConfig(
-        image=settings.DOCKER_IMAGE,
-        network=settings.DOCKER_NETWORK,
-        host=settings.DOCKER_HOST,
-        preview_base_url=settings.DOCKER_PREVIEW_BASE_URL,
-        sandbox_domain=settings.DOCKER_SANDBOX_DOMAIN,
-        traefik_network=settings.DOCKER_TRAEFIK_NETWORK,
-    )
-
-
 class ClaudeAgentService:
     def __init__(self, session_factory: Callable[..., Any] | None = None) -> None:
         self.tool_registry = ToolHandlerRegistry()
         self.session_factory = session_factory or SessionLocal
         self._total_cost_usd = 0.0
-        self._active_transport: DockerSandboxTransport | None = None
+        self._active_transport: E2BSandboxTransport | DockerSandboxTransport | None = (
+            None
+        )
 
     async def __aenter__(self) -> Self:
         return self
@@ -124,13 +117,36 @@ class ClaudeAgentService:
 
     def _create_sandbox_transport(
         self,
+        sandbox_provider: str,
         sandbox_id: str,
         prompt_iterable: AsyncIterator[dict[str, Any]],
         options: ClaudeAgentOptions,
-    ) -> DockerSandboxTransport:
-        return DockerSandboxTransport(
+        user_settings: UserSettings | None = None,
+        e2b_api_key: str | None = None,
+    ) -> E2BSandboxTransport | DockerSandboxTransport:
+        if sandbox_provider == SandboxProviderType.DOCKER or sandbox_provider is None:
+            docker_config = create_docker_config()
+            return DockerSandboxTransport(
+                sandbox_id=sandbox_id,
+                docker_config=docker_config,
+                prompt=prompt_iterable,
+                options=options,
+            )
+
+        if e2b_api_key is None and user_settings is not None:
+            try:
+                e2b_api_key = validate_e2b_api_key(user_settings)
+            except APIKeyValidationError as e:
+                raise ClaudeAgentException(str(e)) from e
+
+        if e2b_api_key is None:
+            raise ClaudeAgentException(
+                "E2B API key is required for E2B sandbox provider"
+            )
+
+        return E2BSandboxTransport(
             sandbox_id=sandbox_id,
-            docker_config=_create_docker_config(),
+            api_key=e2b_api_key,
             prompt=prompt_iterable,
             options=options,
         )
@@ -156,6 +172,8 @@ class ClaudeAgentService:
         ).get_user_settings(user.id)
 
         self._total_cost_usd = 0.0
+
+        sandbox_provider = user_settings.sandbox_provider
 
         options = await self._build_claude_options(
             user=user,
@@ -186,9 +204,11 @@ class ClaudeAgentService:
         prompt_iterable = self._create_prompt_iterable(prompt_message)
 
         transport = self._create_sandbox_transport(
+            sandbox_provider=sandbox_provider,
             sandbox_id=sandbox_id_str,
             prompt_iterable=prompt_iterable,
             options=options,
+            user_settings=user_settings,
         )
 
         async with transport:
@@ -236,7 +256,9 @@ class ClaudeAgentService:
             finally:
                 self._active_transport = None
 
-    def get_active_transport(self) -> DockerSandboxTransport | None:
+    def get_active_transport(
+        self,
+    ) -> E2BSandboxTransport | DockerSandboxTransport | None:
         return self._active_transport
 
     async def _build_auth_env(
@@ -289,12 +311,14 @@ class ClaudeAgentService:
             raise ClaudeAgentException(f"Failed to enhance prompt: {str(e)}")
 
     def _build_permission_server(
-        self, permission_mode: str, chat_id: str
+        self, permission_mode: str, chat_id: str, sandbox_provider: str = "docker"
     ) -> dict[str, Any]:
         chat_token = create_chat_scoped_token(chat_id)
 
         if settings.DOCKER_PERMISSION_API_URL:
             api_base_url = settings.DOCKER_PERMISSION_API_URL
+        elif sandbox_provider == "e2b":
+            api_base_url = settings.BASE_URL.rstrip("/")
         else:
             base_url = settings.BASE_URL
             port = (
@@ -360,8 +384,11 @@ class ClaudeAgentService:
             session_factory=self.session_factory
         ).get_user_settings(user.id)
 
+        sandbox_provider = user_settings.sandbox_provider or "docker"
         servers = {
-            "permission": self._build_permission_server(permission_mode, chat_id)
+            "permission": self._build_permission_server(
+                permission_mode, chat_id, sandbox_provider
+            )
         }
 
         if use_zai_mcp and user_settings.z_ai_api_key:
@@ -562,9 +589,11 @@ class ClaudeAgentService:
             prompt_iterable = self._create_prompt_iterable(prompt_message)
 
             transport = self._create_sandbox_transport(
+                sandbox_provider=user_settings.sandbox_provider,
                 sandbox_id=sandbox_id,
                 prompt_iterable=prompt_iterable,
                 options=options,
+                e2b_api_key=user_settings.e2b_api_key,
             )
 
             async with transport:

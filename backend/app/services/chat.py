@@ -36,7 +36,12 @@ from app.services.base import BaseDbService, SessionFactoryType
 from app.services.claude_agent import ClaudeAgentService
 from app.services.exceptions import ChatException, ErrorCode
 from app.services.message import MessageService
-from app.services.sandbox import DockerConfig, LocalDockerProvider, SandboxService
+from app.services.sandbox import SandboxService
+from app.services.sandbox_providers import (
+    DockerConfig,
+    LocalDockerProvider,
+    SandboxProviderType,
+)
 from app.services.storage import StorageService
 from app.services.user import UserService
 from app.tasks.chat_processor import process_chat
@@ -145,6 +150,7 @@ class ChatService(BaseDbService[Chat]):
                 title=self._truncate_title(chat_data.title),
                 user_id=user.id,
                 sandbox_id=sandbox_id,
+                sandbox_provider=user_settings.sandbox_provider,
             )
 
             db.add(chat)
@@ -535,6 +541,14 @@ class ChatService(BaseDbService[Chat]):
             UserSettings, await self.user_service.get_user_settings(user.id)
         )
 
+        sandbox_provider = user_settings.sandbox_provider or "docker"
+        if sandbox_provider != "docker":
+            raise ChatException(
+                "Fork is only supported with Docker sandbox provider",
+                error_code=ErrorCode.VALIDATION_ERROR,
+                status_code=400,
+            )
+
         docker_config = DockerConfig(
             image=settings.DOCKER_IMAGE,
             network=settings.DOCKER_NETWORK,
@@ -564,6 +578,7 @@ class ChatService(BaseDbService[Chat]):
                         title=self._truncate_title(f"Fork of {source_chat.title}"),
                         user_id=user.id,
                         sandbox_id=new_sandbox_id,
+                        sandbox_provider=SandboxProviderType.DOCKER.value,
                         session_id=target_message.session_id,
                     )
                     db.add(new_chat)

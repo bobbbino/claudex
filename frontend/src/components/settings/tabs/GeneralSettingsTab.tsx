@@ -1,5 +1,10 @@
 import { Button, Switch } from '@/components/ui';
-import type { UserSettings, GeneralSecretFieldConfig, ApiFieldKey } from '@/types';
+import type {
+  UserSettings,
+  GeneralSecretFieldConfig,
+  ApiFieldKey,
+  SandboxProviderType,
+} from '@/types';
 import { SecretInput } from '@/components/settings/inputs/SecretInput';
 import { CodexAuthUpload } from '@/components/settings/inputs/CodexAuthUpload';
 
@@ -13,6 +18,7 @@ interface GeneralSettingsTabProps {
   onNotificationSoundChange: (enabled: boolean) => void;
   onAutoCompactDisabledChange: (disabled: boolean) => void;
   onCodexAuthChange: (content: string | null) => void;
+  onSandboxProviderChange: (provider: SandboxProviderType) => void;
 }
 
 export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
@@ -25,6 +31,7 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
   onNotificationSoundChange,
   onAutoCompactDisabledChange,
   onCodexAuthChange,
+  onSandboxProviderChange,
 }) => (
   <div className="space-y-6">
     <div>
@@ -54,6 +61,50 @@ export const GeneralSettingsTab: React.FC<GeneralSettingsTabProps> = ({
             />
           </div>
         ))}
+      </div>
+    </div>
+
+    <div>
+      <h2 className="mb-4 text-sm font-medium text-text-primary dark:text-text-dark-primary">
+        Sandbox Provider
+      </h2>
+      <div className="space-y-4">
+        <div>
+          <p className="mb-2 text-xs text-text-tertiary dark:text-text-dark-tertiary">
+            Select the sandbox environment for code execution. E2B requires an API key.
+          </p>
+          <div className="flex gap-4">
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="radio"
+                name="sandbox_provider"
+                value="docker"
+                checked={settings.sandbox_provider !== 'e2b'}
+                onChange={() => onSandboxProviderChange('docker')}
+                className="border-border-light text-accent-primary focus:ring-accent-primary h-4 w-4 dark:border-border-dark"
+              />
+              <span className="text-sm text-text-primary dark:text-text-dark-primary">
+                Docker (Local)
+              </span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2">
+              <input
+                type="radio"
+                name="sandbox_provider"
+                value="e2b"
+                checked={settings.sandbox_provider === 'e2b'}
+                onChange={() => onSandboxProviderChange('e2b')}
+                disabled={!settings.e2b_api_key}
+                className="border-border-light text-accent-primary focus:ring-accent-primary h-4 w-4 disabled:cursor-not-allowed disabled:opacity-50 dark:border-border-dark"
+              />
+              <span
+                className={`text-sm ${settings.e2b_api_key ? 'text-text-primary dark:text-text-dark-primary' : 'text-text-tertiary dark:text-text-dark-tertiary'}`}
+              >
+                E2B (Cloud)
+              </span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
 

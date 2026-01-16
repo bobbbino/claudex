@@ -17,7 +17,12 @@ from app.services.command import CommandService
 from app.services.exceptions import UserException
 from app.services.message import MessageService
 from app.services.refresh_token import RefreshTokenService
-from app.services.sandbox import DockerConfig, LocalDockerProvider, SandboxService
+from app.services.sandbox import SandboxService
+from app.services.sandbox_providers import (
+    SandboxProviderType,
+    create_docker_config,
+    create_sandbox_provider,
+)
 from app.services.scheduler import SchedulerService
 from app.services.marketplace import MarketplaceService
 from app.services.plugin_installer import PluginInstallerService
@@ -85,22 +90,32 @@ def get_scheduler_service() -> SchedulerService:
     return SchedulerService(session_factory=SessionLocal)
 
 
-def _create_docker_config() -> DockerConfig:
+async def get_sandbox_service(
+    user: User | None = Depends(optional_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    user_service: UserService = Depends(get_user_service),
+) -> AsyncIterator[SandboxService]:
     from app.core.config import get_settings
 
     settings = get_settings()
-    return DockerConfig(
-        image=settings.DOCKER_IMAGE,
-        network=settings.DOCKER_NETWORK,
-        host=settings.DOCKER_HOST,
-        preview_base_url=settings.DOCKER_PREVIEW_BASE_URL,
-        sandbox_domain=settings.DOCKER_SANDBOX_DOMAIN,
-        traefik_network=settings.DOCKER_TRAEFIK_NETWORK,
+    provider_type = SandboxProviderType(settings.SANDBOX_PROVIDER)
+    e2b_api_key = None
+
+    if user:
+        try:
+            user_settings = await user_service.get_user_settings(user.id, db=db)
+            if user_settings.sandbox_provider:
+                provider_type = SandboxProviderType(user_settings.sandbox_provider)
+            if user_settings.e2b_api_key:
+                e2b_api_key = user_settings.e2b_api_key
+        except UserException:
+            pass
+
+    provider = create_sandbox_provider(
+        provider_type=provider_type,
+        api_key=e2b_api_key,
+        docker_config=create_docker_config(),
     )
-
-
-async def get_sandbox_service() -> AsyncIterator[SandboxService]:
-    provider = LocalDockerProvider(config=_create_docker_config())
     try:
         yield SandboxService(provider)
     finally:
@@ -116,6 +131,7 @@ async def get_storage_service(
 @dataclass
 class SandboxContext:
     sandbox_id: str
+    sandbox_provider: str | None = None
 
 
 async def get_sandbox_context(
@@ -123,7 +139,7 @@ async def get_sandbox_context(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> SandboxContext:
-    query = select(Chat.sandbox_id).where(
+    query = select(Chat.sandbox_id, Chat.sandbox_provider).where(
         Chat.sandbox_id == sandbox_id,
         Chat.user_id == current_user.id,
         Chat.deleted_at.is_(None),
@@ -137,13 +153,29 @@ async def get_sandbox_context(
 
     return SandboxContext(
         sandbox_id=row.sandbox_id,
+        sandbox_provider=row.sandbox_provider,
     )
 
 
 async def get_sandbox_service_for_context(
     context: SandboxContext = Depends(get_sandbox_context),
+    current_user: User = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+    db: AsyncSession = Depends(get_db),
 ) -> AsyncIterator[SandboxService]:
-    provider = LocalDockerProvider(config=_create_docker_config())
+    try:
+        user_settings = await user_service.get_user_settings(current_user.id, db=db)
+        default_provider = user_settings.sandbox_provider
+        api_key = user_settings.e2b_api_key
+    except UserException:
+        default_provider = "docker"
+        api_key = None
+
+    provider_type = context.sandbox_provider or default_provider
+    if provider_type != SandboxProviderType.E2B.value:
+        api_key = None
+
+    provider = create_sandbox_provider(provider_type, api_key=api_key)
     try:
         yield SandboxService(provider)
     finally:

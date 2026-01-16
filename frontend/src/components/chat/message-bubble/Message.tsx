@@ -3,7 +3,12 @@ import { CheckCircle2, Copy, GitFork, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MessageContent } from './MessageContent';
 import { UserAvatar, BotAvatar } from './MessageAvatars';
-import { useModelsQuery, useForkChatMutation, useRestoreCheckpointMutation } from '@/hooks/queries';
+import {
+  useModelsQuery,
+  useForkChatMutation,
+  useRestoreCheckpointMutation,
+  useSettingsQuery,
+} from '@/hooks/queries';
 import type { MessageAttachment } from '@/types';
 import { ConfirmDialog, LoadingOverlay, Button, Spinner, Tooltip } from '@/components/ui';
 import { formatRelativeTime, formatFullTimestamp } from '@/utils/date';
@@ -42,6 +47,8 @@ export const Message = memo(function Message({
 }: MessageProps) {
   const { chatId, sandboxId } = useChatContext();
   const { data: models = [] } = useModelsQuery();
+  const { data: settings } = useSettingsQuery();
+  const sandboxProvider = settings?.sandbox_provider ?? 'docker';
   const navigate = useNavigate();
   const [isRestoring, setIsRestoring] = useState(false);
   const [isForking, setIsForking] = useState(false);
@@ -169,7 +176,7 @@ export const Message = memo(function Message({
                       </Button>
                     </Tooltip>
 
-                    {sandboxId && (
+                    {sandboxProvider === 'docker' && sandboxId && (
                       <Tooltip content={isForking ? 'Forking...' : 'Fork'} position="bottom">
                         <Button
                           onClick={handleFork}

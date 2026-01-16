@@ -52,7 +52,9 @@ from app.models.db_models.enums import MessageRole, MessageStreamStatus, ModelPr
 from app.services.ai_model import AIModelService
 from app.services.chat import ChatService
 from app.services.claude_agent import ClaudeAgentService
-from app.services.sandbox import DockerConfig, LocalDockerProvider, SandboxService
+from app.services.sandbox import SandboxService
+from app.services.sandbox_providers import SandboxProviderType, create_sandbox_provider
+from app.services.sandbox_providers.types import DockerConfig
 from app.services.storage import StorageService
 from app.services.streaming.context_usage import ContextUsageTracker
 from app.services.streaming.orchestrator import run_chat_stream
@@ -395,7 +397,10 @@ class DockerSandboxManager:
     def __init__(self, config: DockerConfig):
         self.config = config
         self.sandbox_id: str | None = None
-        provider = LocalDockerProvider(config=config)
+        provider = create_sandbox_provider(
+            provider_type=SandboxProviderType.DOCKER,
+            docker_config=config,
+        )
         self.service = SandboxService(provider)
 
     async def get_sandbox(self) -> str:

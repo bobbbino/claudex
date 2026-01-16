@@ -11,7 +11,7 @@ from app.services.streaming.events import StreamEvent
 from app.utils.redis import redis_connection
 
 if TYPE_CHECKING:
-    from app.services.sandbox.transport import BaseSandboxTransport
+    from app.services.transports.base import BaseSandboxTransport
     from app.services.streaming.publisher import StreamPublisher
 
 

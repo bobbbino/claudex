@@ -35,13 +35,15 @@ def _get_env_vars_section(env_vars_formatted: str | None) -> str:
 def _get_runtime_context_section(
     sandbox_id: str,
     current_date: str,
+    sandbox_provider: str = "docker",
 ) -> str:
     ports_str = ", ".join(str(p) for p in DOCKER_AVAILABLE_PORTS)
+    provider_label = "E2B (cloud)" if sandbox_provider == "e2b" else "Docker (local)"
     return f"""<runtime_context>
 - Workspace: /home/user
 - Sandbox: {sandbox_id}
 - Date: {current_date}
-- Sandbox Provider: Docker (local)
+- Sandbox Provider: {provider_label}
 - Available ports for dev servers: {ports_str}
 - IMPORTANT: Only use ports from the available ports list above. Other ports will not be accessible.
 - IMPORTANT: Do NOT tell users specific localhost URLs. The actual port is dynamically mapped. Direct users to check the Preview panel for the correct URL.
@@ -52,9 +54,12 @@ def get_system_prompt(
     sandbox_id: str,
     github_token_configured: bool = False,
     env_vars_formatted: str | None = None,
+    sandbox_provider: str = "docker",
 ) -> str:
     current_date = datetime.utcnow().strftime("%Y-%m-%d")
-    runtime_section = _get_runtime_context_section(sandbox_id, current_date)
+    runtime_section = _get_runtime_context_section(
+        sandbox_id, current_date, sandbox_provider
+    )
     github_section = _get_github_section(github_token_configured)
     env_section = _get_env_vars_section(env_vars_formatted)
 
@@ -72,9 +77,12 @@ def build_custom_system_prompt(
     sandbox_id: str,
     github_token_configured: bool = False,
     env_vars_formatted: str | None = None,
+    sandbox_provider: str = "docker",
 ) -> str:
     current_date = datetime.utcnow().strftime("%Y-%m-%d")
-    runtime_section = _get_runtime_context_section(sandbox_id, current_date)
+    runtime_section = _get_runtime_context_section(
+        sandbox_id, current_date, sandbox_provider
+    )
     github_section = _get_github_section(github_token_configured)
     env_section = _get_env_vars_section(env_vars_formatted)
 
@@ -103,6 +111,10 @@ def build_system_prompt_for_chat(
             f"- {env_var['key']}" for env_var in user_settings.custom_env_vars
         )
 
+    sandbox_provider = (
+        user_settings.sandbox_provider if user_settings else None
+    ) or "docker"
+
     if selected_prompt_name and user_settings and user_settings.custom_prompts:
         custom_prompt = next(
             (
@@ -118,10 +130,12 @@ def build_system_prompt_for_chat(
                 sandbox_id,
                 github_token_configured,
                 env_vars_formatted,
+                sandbox_provider,
             )
 
     return get_system_prompt(
         sandbox_id,
         github_token_configured,
         env_vars_formatted,
+        sandbox_provider,
     )
