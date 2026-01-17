@@ -128,7 +128,6 @@ class ModalSandboxProvider(SandboxProvider):
 
         sandbox_id = str(sandbox.object_id)
         self._active_sandboxes[sandbox_id] = sandbox
-        await self._start_ide_server(sandbox_id)
         return sandbox_id
 
     async def connect_sandbox(self, sandbox_id: str) -> bool:
@@ -419,34 +418,6 @@ class ModalSandboxProvider(SandboxProvider):
             logger.warning("Failed to get VNC URL for sandbox %s: %s", sandbox_id, e)
 
         return None
-
-    async def _start_ide_server(self, sandbox_id: str) -> None:
-        try:
-            await self.execute_command(
-                sandbox_id,
-                f"nohup openvscode-server --port={OPENVSCODE_PORT} "
-                "--host=0.0.0.0 --without-connection-token > /dev/null 2>&1 &",
-                background=True,
-                timeout=5,
-            )
-        except Exception as e:
-            logger.warning(
-                "Failed to start IDE server for sandbox %s: %s", sandbox_id, e
-            )
-
-    async def _ensure_ide_server_running(self, sandbox_id: str) -> None:
-        try:
-            result = await self.execute_command(
-                sandbox_id,
-                f"ss -tuln | grep -q ':{OPENVSCODE_PORT}' && echo 'running' || echo 'stopped'",
-                timeout=5,
-            )
-            if "stopped" in result.stdout:
-                await self._start_ide_server(sandbox_id)
-        except Exception as e:
-            logger.warning(
-                "Failed to check IDE server status for sandbox %s: %s", sandbox_id, e
-            )
 
     async def _get_sandbox(self, sandbox_id: str) -> modal.Sandbox:
         if sandbox_id in self._active_sandboxes:
