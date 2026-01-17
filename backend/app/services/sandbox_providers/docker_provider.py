@@ -141,34 +141,6 @@ class LocalDockerProvider(SandboxProvider):
         except Exception as e:
             raise SandboxException(f"Failed to create Docker sandbox: {e}")
 
-    async def _start_ide_server(self, sandbox_id: str) -> None:
-        try:
-            await self.execute_command(
-                sandbox_id,
-                f"nohup openvscode-server --port={self.config.openvscode_port} "
-                f"--host=0.0.0.0 --without-connection-token > /dev/null 2>&1 &",
-                background=True,
-                timeout=5,
-            )
-        except Exception as e:
-            logger.warning(
-                "Failed to start IDE server for sandbox %s: %s", sandbox_id, e
-            )
-
-    async def _ensure_ide_server_running(self, sandbox_id: str) -> None:
-        try:
-            result = await self.execute_command(
-                sandbox_id,
-                f"ss -tuln | grep -q ':{self.config.openvscode_port}' && echo 'running' || echo 'stopped'",
-                timeout=5,
-            )
-            if "stopped" in result.stdout:
-                await self._start_ide_server(sandbox_id)
-        except Exception as e:
-            logger.warning(
-                "Failed to check IDE server status for sandbox %s: %s", sandbox_id, e
-            )
-
     @staticmethod
     def _extract_port_mappings(container: Any) -> dict[int, int]:
         container.reload()
@@ -206,7 +178,6 @@ class LocalDockerProvider(SandboxProvider):
                 self._executor, lambda: self._is_container_running(container)
             )
             if is_running:
-                await self._ensure_ide_server_running(sandbox_id)
                 return True
             del self._containers[sandbox_id]
 
@@ -221,7 +192,6 @@ class LocalDockerProvider(SandboxProvider):
                 self._executor, lambda: self._extract_port_mappings(container)
             )
             self._port_mappings[sandbox_id] = port_mappings
-            await self._ensure_ide_server_running(sandbox_id)
             return True
 
         return False
@@ -236,6 +206,7 @@ class LocalDockerProvider(SandboxProvider):
                 return
 
         await self._destroy_container(container)
+        await self._cleanup_docker_resources()
 
         if sandbox_id in self._containers:
             del self._containers[sandbox_id]
@@ -578,6 +549,26 @@ class LocalDockerProvider(SandboxProvider):
             pass
         try:
             await asyncio.to_thread(container.remove, force=True)
+        except Exception:
+            pass
+
+    async def _cleanup_docker_resources(self) -> None:
+        loop = asyncio.get_running_loop()
+        client = self._get_docker_client()
+
+        try:
+            await loop.run_in_executor(
+                self._executor,
+                lambda: client.images.prune(filters={"dangling": True}),
+            )
+        except Exception:
+            pass
+
+        try:
+            await loop.run_in_executor(
+                self._executor,
+                lambda: client.volumes.prune(),
+            )
         except Exception:
             pass
 
