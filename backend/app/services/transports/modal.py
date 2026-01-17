@@ -59,6 +59,10 @@ class ModalSandboxTransport(BaseSandboxTransport):
         try:
             assert self._sandbox is not None
             self._process = await self._sandbox.exec.aio(
+                "runuser",
+                "-u",
+                user,
+                "--",
                 "bash",
                 "-c",
                 f"cd {cwd} && {command_line}",
