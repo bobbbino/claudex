@@ -45,7 +45,11 @@ async def upload_oauth_client(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
     user_settings.gmail_oauth_client = request.client_config
+    user_settings.gmail_oauth_tokens = None
+    user_settings.gmail_connected_at = None
+    user_settings.gmail_email = None
     flag_modified(user_settings, "gmail_oauth_client")
+    flag_modified(user_settings, "gmail_oauth_tokens")
 
     await user_service.commit_settings_and_invalidate_cache(
         user_settings, db, current_user.id
@@ -78,7 +82,9 @@ async def delete_oauth_client(
         user_settings, db, current_user.id
     )
 
-    return OAuthClientResponse(success=True, message="OAuth client configuration removed")
+    return OAuthClientResponse(
+        success=True, message="OAuth client configuration removed"
+    )
 
 
 @router.get("/gmail/oauth-url", response_model=OAuthUrlResponse)
@@ -98,7 +104,9 @@ async def get_oauth_url(
             detail="OAuth client not configured. Upload gcp-oauth.keys.json first.",
         )
 
-    client_id, _ = gmail_oauth.extract_client_credentials(user_settings.gmail_oauth_client)
+    client_id, _ = gmail_oauth.extract_client_credentials(
+        user_settings.gmail_oauth_client
+    )
     state = gmail_oauth.create_oauth_state(current_user.id)
     url = gmail_oauth.build_authorization_url(client_id, state)
 
@@ -131,7 +139,9 @@ async def oauth_callback(
 
     if not user_settings.gmail_oauth_client:
         return HTMLResponse(
-            content=_callback_html("Authentication failed: OAuth client not configured"),
+            content=_callback_html(
+                "Authentication failed: OAuth client not configured"
+            ),
             status_code=400,
         )
 
@@ -140,11 +150,15 @@ async def oauth_callback(
     )
 
     try:
-        tokens = await gmail_oauth.exchange_code_for_tokens(code, client_id, client_secret)
+        tokens = await gmail_oauth.exchange_code_for_tokens(
+            code, client_id, client_secret
+        )
     except Exception as e:
         logger.error("Token exchange failed: %s", e)
         return HTMLResponse(
-            content=_callback_html("Authentication failed: Could not exchange code for tokens"),
+            content=_callback_html(
+                "Authentication failed: Could not exchange code for tokens"
+            ),
             status_code=500,
         )
 
@@ -159,9 +173,7 @@ async def oauth_callback(
     user_settings.gmail_email = email
     flag_modified(user_settings, "gmail_oauth_tokens")
 
-    await user_service.commit_settings_and_invalidate_cache(
-        user_settings, db, user_id
-    )
+    await user_service.commit_settings_and_invalidate_cache(user_settings, db, user_id)
 
     return HTMLResponse(content=_callback_html(None, email))
 
@@ -238,7 +250,7 @@ def _callback_html(error: str | None, email: str | None = None) -> str:
 <body style="font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a1a; color: #fff;">
     <div style="text-align: center;">
         <h2 style="color: #22c55e;">Gmail Connected</h2>
-        <p>Successfully connected{f' as {email}' if email else ''}.</p>
+        <p>Successfully connected{f" as {email}" if email else ""}.</p>
         <p style="color: #888;">This window will close automatically.</p>
     </div>
     <script>

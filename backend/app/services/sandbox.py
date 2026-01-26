@@ -630,10 +630,14 @@ class SandboxService:
         await self.execute_command(sandbox_id, f"mkdir -p {gmail_dir}")
 
         oauth_client_content = json.dumps(gmail_oauth_client, indent=2)
-        await self.write_file(sandbox_id, f"{gmail_dir}/gcp-oauth.keys.json", oauth_client_content)
+        await self.write_file(
+            sandbox_id, f"{gmail_dir}/gcp-oauth.keys.json", oauth_client_content
+        )
 
         # Build credentials.json in the format Google's OAuth library expects
-        client_data = gmail_oauth_client.get("installed") or gmail_oauth_client.get("web", {})
+        client_data = gmail_oauth_client.get("installed") or gmail_oauth_client.get(
+            "web", {}
+        )
         credentials: dict[str, Any] = {
             "token": gmail_oauth_tokens.get("access_token"),
             "refresh_token": gmail_oauth_tokens.get("refresh_token"),
@@ -645,8 +649,11 @@ class SandboxService:
         if gmail_oauth_tokens.get("expiry"):
             credentials["expiry"] = gmail_oauth_tokens["expiry"]
         credentials_content = json.dumps(credentials, indent=2)
-        await self.write_file(sandbox_id, f"{gmail_dir}/credentials.json", credentials_content)
+        await self.write_file(
+            sandbox_id, f"{gmail_dir}/credentials.json", credentials_content
+        )
 
+        await self.execute_command(sandbox_id, f"sudo chown -R user:user {gmail_dir}")
         await self.execute_command(sandbox_id, f"chmod 600 {gmail_dir}/*.json")
 
     async def initialize_sandbox(
@@ -700,7 +707,9 @@ class SandboxService:
 
             if gmail_oauth_client and gmail_oauth_tokens:
                 tasks.append(
-                    self._setup_gmail_mcp(sandbox_id, gmail_oauth_client, gmail_oauth_tokens)
+                    self._setup_gmail_mcp(
+                        sandbox_id, gmail_oauth_client, gmail_oauth_tokens
+                    )
                 )
 
         openai_auth = self._get_openai_auth_from_provider(custom_providers)

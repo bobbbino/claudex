@@ -5,7 +5,9 @@ from pydantic import BaseModel, Field
 
 
 class OAuthClientUploadRequest(BaseModel):
-    client_config: dict[str, Any] = Field(..., description="Contents of gcp-oauth.keys.json")
+    client_config: dict[str, Any] = Field(
+        ..., description="Contents of gcp-oauth.keys.json"
+    )
 
 
 class OAuthClientResponse(BaseModel):

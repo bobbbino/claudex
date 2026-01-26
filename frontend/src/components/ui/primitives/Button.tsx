@@ -82,7 +82,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       className={cn(
         'inline-flex items-center justify-center font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-60 dark:focus-visible:ring-offset-black',
-        size !== 'icon' && 'gap-2',
+        size !== 'icon' && 'gap-1.5',
         variantClasses[resolvedVariant],
         sizeClasses[size],
         variant === 'gradient' && 'group',

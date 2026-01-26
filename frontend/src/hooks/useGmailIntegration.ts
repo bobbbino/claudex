@@ -51,6 +51,10 @@ export const useGmailIntegration = () => {
     try {
       const url = await integrationsService.getGmailOAuthUrl();
       const popup = window.open(url, 'gmail-oauth', 'width=500,height=600,scrollbars=yes');
+      if (!popup) {
+        toast.error('Pop-up blocked. Please allow pop-ups to connect Gmail.');
+        return;
+      }
 
       const expectedOrigin = new URL(getApiBaseUrl()).origin;
 

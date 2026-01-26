@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, cast
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from uuid import UUID
 
 import httpx
@@ -44,10 +44,31 @@ def validate_client_config(config: dict[str, Any]) -> tuple[bool, str | None]:
     if not client_data.get("client_secret"):
         return False, "Missing client_secret"
 
-    if is_web:
-        redirect_uris = client_data.get("redirect_uris", [])
-        expected_uri = get_redirect_uri().rstrip("/")
-        normalized_uris = [uri.rstrip("/") for uri in redirect_uris]
+    redirect_uris = client_data.get("redirect_uris", [])
+    expected_uri = get_redirect_uri().rstrip("/")
+    normalized_uris = [uri.rstrip("/") for uri in redirect_uris]
+
+    if not is_web:
+        redirect_host = urlparse(expected_uri).hostname or ""
+        if redirect_host not in {"localhost", "127.0.0.1", "::1"}:
+            return (
+                False,
+                "Installed OAuth clients only work with localhost redirects. "
+                "Create a Web application client instead.",
+            )
+        if not redirect_uris:
+            return False, "Installed client must include redirect_uris"
+        has_loopback_redirect = any(
+            (urlparse(uri).hostname or "") in {"localhost", "127.0.0.1", "::1"}
+            for uri in normalized_uris
+        )
+        if not has_loopback_redirect:
+            return (
+                False,
+                "Installed client must include a localhost redirect URI "
+                "(e.g., http://localhost).",
+            )
+    else:
         if expected_uri not in normalized_uris:
             return False, f"Web client must include '{expected_uri}' in redirect_uris"
 
@@ -70,12 +91,16 @@ def create_oauth_state(user_id: UUID) -> str:
         "purpose": "gmail_oauth",
         "exp": expires,
     }
-    return cast(str, jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM))
+    return cast(
+        str, jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    )
 
 
 def verify_oauth_state(state: str) -> UUID | None:
     try:
-        payload = jwt.decode(state, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            state, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         if payload.get("purpose") != "gmail_oauth":
             return None
         user_id_str = payload.get("user_id")
@@ -145,7 +170,7 @@ async def revoke_token(token: str) -> bool:
             GOOGLE_REVOKE_URL,
             params={"token": token},
         )
-        return response.status_code == 200
+        return bool(response.status_code == 200)
 
 
 async def get_user_email(access_token: str) -> str | None:

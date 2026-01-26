@@ -120,7 +120,16 @@ export const GmailIntegrationCard: React.FC<GmailIntegrationCardProps> = ({
                   </a>
                 </li>
                 <li>Create a project and enable the Gmail API</li>
-                <li>Create OAuth credentials (Desktop app type)</li>
+                <li>
+                  Create OAuth credentials: Desktop app for localhost/dev only, Web application for
+                  hosted or self-hosted URLs
+                </li>
+                <li>
+                  If using Web application, add this redirect URI:{' '}
+                  <code className="bg-surface-primary dark:bg-surface-dark-primary rounded px-1 py-0.5 text-[11px]">
+                    https://YOUR_DOMAIN/api/v1/integrations/gmail/callback
+                  </code>
+                </li>
                 <li>Download the JSON file</li>
               </ol>
             </div>
@@ -138,11 +147,7 @@ export const GmailIntegrationCard: React.FC<GmailIntegrationCardProps> = ({
               disabled={isUploading}
               className="w-full"
             >
-              {isUploading ? (
-                <Spinner size="sm" className="mr-2" />
-              ) : (
-                <Upload className="mr-2 h-4 w-4" />
-              )}
+              {isUploading ? <Spinner size="sm" /> : <Upload className="h-4 w-4" />}
               Upload gcp-oauth.keys.json
             </Button>
           </div>
@@ -155,7 +160,7 @@ export const GmailIntegrationCard: React.FC<GmailIntegrationCardProps> = ({
             </p>
             <div className="flex gap-2">
               <Button variant="primary" size="sm" onClick={onConnect} className="flex-1">
-                <Link2 className="mr-2 h-4 w-4" />
+                <Link2 className="h-4 w-4" />
                 Connect Gmail
               </Button>
               <Button
@@ -193,11 +198,7 @@ export const GmailIntegrationCard: React.FC<GmailIntegrationCardProps> = ({
               disabled={isDisconnecting}
               className="w-full"
             >
-              {isDisconnecting ? (
-                <Spinner size="sm" className="mr-2" />
-              ) : (
-                <Unlink className="mr-2 h-4 w-4" />
-              )}
+              {isDisconnecting ? <Spinner size="sm" /> : <Unlink className="h-4 w-4" />}
               Disconnect Gmail
             </Button>
           </div>

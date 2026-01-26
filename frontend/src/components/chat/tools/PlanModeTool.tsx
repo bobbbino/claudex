@@ -138,7 +138,7 @@ const ExitPlanModeInner: React.FC<PlanModeToolProps> = ({ tool, chatId }) => {
             {showRejectInput ? (
               <>
                 <Button onClick={handleJustReject} variant="ghost" size="sm" disabled={isLoading}>
-                  <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                  <XCircle className="h-3.5 w-3.5" />
                   Just Reject
                 </Button>
                 <Button
@@ -156,7 +156,7 @@ const ExitPlanModeInner: React.FC<PlanModeToolProps> = ({ tool, chatId }) => {
                   Reject
                 </Button>
                 <Button onClick={handleApprove} variant="primary" size="sm" disabled={isLoading}>
-                  <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                  <CheckCircle className="h-3.5 w-3.5" />
                   Approve
                 </Button>
               </>

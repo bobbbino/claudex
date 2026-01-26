@@ -8,6 +8,7 @@ ENV NODE_VERSION=20.18.0
 ENV TERM=xterm-256color
 ENV DISPLAY=:99
 ENV OPENVSCODE_PORT=8765
+ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
 
 RUN apt-get update && apt-get install -y \
     curl \
@@ -75,7 +76,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
     nvm alias default $NODE_VERSION
 
 RUN . "$NVM_DIR/nvm.sh" && \
-    npm install -g @anthropic-ai/claude-code@2.1.19 @openai/codex
+    npm install -g @anthropic-ai/claude-code@2.1.20 @openai/codex @gongrzhe/server-gmail-autoauth-mcp
 
 RUN python3 -m pip install --user --upgrade pip && \
     python3 -m pip install --user \
