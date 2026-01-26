@@ -40,6 +40,7 @@ import { CommandEditDialog } from '@/components/settings/dialogs/CommandEditDial
 import { PromptsSettingsTab } from '@/components/settings/tabs/PromptsSettingsTab';
 import { PromptEditDialog } from '@/components/settings/dialogs/PromptEditDialog';
 import { MarketplaceSettingsTab } from '@/components/settings/tabs/MarketplaceSettingsTab';
+import { IntegrationsSettingsTab } from '@/components/settings/tabs/IntegrationsSettingsTab';
 import type { ApiFieldKey, CustomPrompt, CustomProvider, SandboxProviderType } from '@/types';
 import { useCrudForm } from '@/hooks/useCrudForm';
 import { useTaskManagement } from '@/hooks/useTaskManagement';
@@ -59,6 +60,7 @@ import {
 type TabKey =
   | 'general'
   | 'providers'
+  | 'integrations'
   | 'marketplace'
   | 'mcp'
   | 'agents'
@@ -105,6 +107,7 @@ const TAB_FIELDS: Record<TabKey, (keyof UserSettings)[]> = {
     // "unsaved changes" banner
   ],
   providers: ['custom_providers'],
+  integrations: [],
   marketplace: [],
   mcp: ['custom_mcps'],
   agents: ['custom_agents'],
@@ -134,6 +137,7 @@ const SettingsPage: React.FC = () => {
   const tabs: { id: TabKey; label: string }[] = [
     { id: 'general', label: 'General' },
     { id: 'providers', label: 'Providers' },
+    { id: 'integrations', label: 'Integrations' },
     { id: 'marketplace', label: 'Marketplace' },
     { id: 'mcp', label: 'MCP' },
     { id: 'agents', label: 'Agents' },
@@ -640,6 +644,12 @@ const SettingsPage: React.FC = () => {
                     onDeleteProvider={handleDeleteProvider}
                     onToggleProvider={handleToggleProvider}
                   />
+                </div>
+              )}
+
+              {activeTab === 'integrations' && (
+                <div role="tabpanel" id="integrations-panel" aria-labelledby="integrations-tab">
+                  <IntegrationsSettingsTab />
                 </div>
               )}
 
