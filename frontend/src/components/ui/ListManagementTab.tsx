@@ -79,7 +79,7 @@ export const ListManagementTab = <T,>({
             onClick={onAdd}
             variant="outline"
             size="sm"
-            className="flex w-full shrink-0 items-center justify-center gap-1.5 sm:w-auto"
+            className="w-full shrink-0 sm:w-auto"
             disabled={isMaxLimitReached}
             title={
               isMaxLimitReached && maxLimit ? `Maximum of ${maxLimit} items reached` : undefined

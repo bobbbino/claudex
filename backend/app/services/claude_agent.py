@@ -411,6 +411,12 @@ class ClaudeAgentService:
         if user_settings.custom_mcps:
             servers.update(self.build_custom_mcps(user_settings.custom_mcps))
 
+        if user_settings.gmail_oauth_tokens:
+            servers["gmail"] = {
+                "command": "npx",
+                "args": ["-y", "@gongrzhe/server-gmail-autoauth-mcp"],
+            }
+
         return servers
 
     def build_mcp_config(

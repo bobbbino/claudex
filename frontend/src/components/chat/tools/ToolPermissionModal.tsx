@@ -118,7 +118,7 @@ export function ToolPermissionModal({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                <XCircle className="h-3.5 w-3.5" />
                 Just Reject
               </Button>
               <Button
@@ -138,11 +138,11 @@ export function ToolPermissionModal({
                 disabled={isLoading}
                 className="flex-1"
               >
-                <XCircle className="mr-1.5 h-3.5 w-3.5" />
+                <XCircle className="h-3.5 w-3.5" />
                 Reject
               </Button>
               <Button onClick={onApprove} variant="primary" disabled={isLoading} className="flex-1">
-                <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                <CheckCircle className="h-3.5 w-3.5" />
                 Approve
               </Button>
             </>

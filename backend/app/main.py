@@ -21,6 +21,7 @@ from app.api.endpoints import (
     agents,
     mcps,
     marketplace,
+    integrations,
 )
 from app.api.endpoints import settings as settings_router
 from app.core.config import get_settings
@@ -139,6 +140,11 @@ def create_application() -> FastAPI:
         marketplace.router,
         prefix=f"{settings.API_V1_STR}/marketplace",
         tags=["Marketplace"],
+    )
+    application.include_router(
+        integrations.router,
+        prefix=f"{settings.API_V1_STR}/integrations",
+        tags=["Integrations"],
     )
 
     application.openapi = lambda: custom_openapi(application)

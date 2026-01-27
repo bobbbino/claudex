@@ -80,7 +80,7 @@ export const ProvidersSettingsTab: React.FC<ProvidersSettingsTabProps> = ({
               No providers configured
             </p>
             <Button onClick={onAddProvider} variant="primary" size="sm">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               Add Provider
             </Button>
           </div>
@@ -102,7 +102,7 @@ export const ProvidersSettingsTab: React.FC<ProvidersSettingsTabProps> = ({
             </p>
           </div>
           <Button onClick={onAddProvider} variant="outline" size="sm">
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             Add Provider
           </Button>
         </div>

@@ -50,13 +50,13 @@ RUN curl -fsSLO https://nodejs.org/dist/v20.19.0/node-v20.19.0-linux-x64.tar.xz 
     && echo '#!/bin/sh\nexec bun x "$@"' > /usr/local/bin/bunx \
     && chmod +x /usr/local/bin/bunx
 
-RUN npm install -g @anthropic-ai/claude-code@2.1.19
+RUN npm install -g @anthropic-ai/claude-code@2.1.20
 
 RUN pip3 install anthropic-bridge==0.1.23
 
 RUN npm install -g @openai/codex
 
-RUN npm install -g @z_ai/mcp-server
+RUN npm install -g @z_ai/mcp-server @gongrzhe/server-gmail-autoauth-mcp
 
 # Install OpenVSCode Server for full IDE experience
 RUN OPENVSCODE_VERSION="1.105.1" && \
@@ -85,5 +85,4 @@ RUN curl -fsSL https://get.docker.com | sh && \
     echo '{"storage-driver": "vfs"}' > /etc/docker/daemon.json
 
 ENV PATH="/usr/local/bin:/usr/local/lib/nodejs/node-v20.19.0-linux-x64/bin:/usr/local/go/bin:/root/.cargo/bin:${PATH}"
-
-RUN export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
