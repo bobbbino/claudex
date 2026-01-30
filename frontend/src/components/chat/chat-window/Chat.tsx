@@ -310,6 +310,13 @@ export const Chat = memo(function Chat({
 
   const lastBotMessageIndex = useMemo(() => findLastBotMessageIndex(messages), [messages]);
 
+  const canShowPermissionInline =
+    pendingPermissionRequest && onPermissionApprove && onPermissionReject;
+  const lastBotIsStreaming =
+    lastBotMessageIndex >= 0 && streamingMessageIds.includes(messages[lastBotMessageIndex]?.id);
+  const showPermissionAtEnd =
+    canShowPermissionInline && (lastBotMessageIndex < 0 || lastBotIsStreaming);
+
   const handleSuggestionSelect = useCallback(
     (suggestion: string) => {
       setInputMessage(suggestion);
@@ -349,11 +356,7 @@ export const Chat = memo(function Chat({
                 const messageIsStreaming = streamingMessageIds.includes(msg.id);
                 const isLastBotMessage = msg.is_bot && index === lastBotMessageIndex;
                 const showPermissionAfterThis =
-                  isLastBotMessage &&
-                  !messageIsStreaming &&
-                  pendingPermissionRequest &&
-                  onPermissionApprove &&
-                  onPermissionReject;
+                  isLastBotMessage && !messageIsStreaming && canShowPermissionInline;
 
                 return (
                   <React.Fragment key={msg.id}>
@@ -387,6 +390,20 @@ export const Chat = memo(function Chat({
                   </React.Fragment>
                 );
               })}
+              {showPermissionAtEnd &&
+                pendingPermissionRequest &&
+                onPermissionApprove &&
+                onPermissionReject && (
+                  <div className="px-4 py-3">
+                    <ToolPermissionInline
+                      request={pendingPermissionRequest}
+                      onApprove={onPermissionApprove}
+                      onReject={onPermissionReject}
+                      isLoading={isPermissionLoading}
+                      error={permissionError}
+                    />
+                  </div>
+                )}
               {pendingMessages.map((pending) => (
                 <PendingMessage
                   key={pending.id}
