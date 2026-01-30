@@ -311,7 +311,11 @@ export const Chat = memo(function Chat({
   const lastBotMessageIndex = useMemo(() => findLastBotMessageIndex(messages), [messages]);
 
   const canShowPermissionInline =
-    pendingPermissionRequest && onPermissionApprove && onPermissionReject;
+    pendingPermissionRequest &&
+    onPermissionApprove &&
+    onPermissionReject &&
+    pendingPermissionRequest.tool_name !== 'AskUserQuestion' &&
+    pendingPermissionRequest.tool_name !== 'ExitPlanMode';
   const lastBotIsStreaming =
     lastBotMessageIndex >= 0 && streamingMessageIds.includes(messages[lastBotMessageIndex]?.id);
   const showPermissionAtEnd =
@@ -377,10 +381,10 @@ export const Chat = memo(function Chat({
                       onSuggestionSelect={isLastBotMessage ? handleSuggestionSelect : undefined}
                     />
                     {showPermissionAfterThis && (
-                      <div className="px-4 py-2 sm:px-6 sm:py-3">
+                      <div className="px-4 sm:px-6">
                         <div className="flex items-start gap-3 sm:gap-4">
-                          <div className="mt-1 h-8 w-8 flex-shrink-0" />
-                          <div className="min-w-0 flex-1">
+                          <div className="h-8 w-8 flex-shrink-0" />
+                          <div className="mb-3 mt-1 min-w-0 flex-1">
                             <ToolPermissionInline
                               request={pendingPermissionRequest}
                               onApprove={onPermissionApprove}
@@ -399,10 +403,10 @@ export const Chat = memo(function Chat({
                 pendingPermissionRequest &&
                 onPermissionApprove &&
                 onPermissionReject && (
-                  <div className="px-4 py-2 sm:px-6 sm:py-3">
+                  <div className="px-4 sm:px-6">
                     <div className="flex items-start gap-3 sm:gap-4">
-                      <div className="mt-1 h-8 w-8 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
+                      <div className="h-8 w-8 flex-shrink-0" />
+                      <div className="mb-3 mt-1 min-w-0 flex-1">
                         <ToolPermissionInline
                           request={pendingPermissionRequest}
                           onApprove={onPermissionApprove}

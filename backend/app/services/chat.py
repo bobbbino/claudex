@@ -268,7 +268,9 @@ class ChatService(BaseDbService[Chat]):
             await db.commit()
 
             if chat.sandbox_id:
-                await self.sandbox_service.delete_sandbox(chat.sandbox_id)
+                asyncio.create_task(
+                    self.sandbox_service.delete_sandbox(chat.sandbox_id)
+                )
 
     async def get_chat_sandbox_id(self, chat_id: UUID, user: User) -> str | None:
         async with self.session_factory() as db:
@@ -351,7 +353,7 @@ class ChatService(BaseDbService[Chat]):
             await db.commit()
 
             for sandbox_id in sandbox_ids:
-                await self.sandbox_service.delete_sandbox(sandbox_id)
+                asyncio.create_task(self.sandbox_service.delete_sandbox(sandbox_id))
 
             return len(sandbox_ids)
 
