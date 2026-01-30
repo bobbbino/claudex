@@ -157,9 +157,6 @@ class SandboxService:
     async def delete_sandbox(self, sandbox_id: str) -> None:
         if not sandbox_id:
             return
-        await self._delete_sandbox_deferred(sandbox_id)
-
-    async def _delete_sandbox_deferred(self, sandbox_id: str) -> None:
         self._ide_tokens.pop(sandbox_id, None)
         try:
             await self.provider.delete_sandbox(sandbox_id)

@@ -1,4 +1,12 @@
-import { useRef, useState, useCallback, useEffect, useLayoutEffect, memo, useMemo } from 'react';
+import React, {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  memo,
+  useMemo,
+} from 'react';
 import { useInView } from 'react-intersection-observer';
 import { findLastBotMessageIndex } from '@/utils/message';
 import { Message } from '@/components/chat/message-bubble/Message';
@@ -15,8 +23,10 @@ import type {
   CustomAgent,
   CustomCommand,
   CustomPrompt,
+  PermissionRequest,
 } from '@/types';
 import { useStreamStore, useMessageQueueStore, EMPTY_QUEUE } from '@/store';
+import { ToolPermissionInline } from '@/components/chat/tools/ToolPermissionInline';
 import { ChatProvider } from '@/contexts/ChatContext';
 
 const SCROLL_THRESHOLD_PERCENT = 20;
@@ -52,6 +62,11 @@ export interface ChatProps {
   customAgents?: CustomAgent[];
   customSlashCommands?: CustomCommand[];
   customPrompts?: CustomPrompt[];
+  pendingPermissionRequest?: PermissionRequest | null;
+  onPermissionApprove?: () => void;
+  onPermissionReject?: (alternativeInstruction?: string) => void;
+  isPermissionLoading?: boolean;
+  permissionError?: string | null;
 }
 
 export const Chat = memo(function Chat({
@@ -82,6 +97,11 @@ export const Chat = memo(function Chat({
   customAgents = [],
   customSlashCommands = [],
   customPrompts = [],
+  pendingPermissionRequest,
+  onPermissionApprove,
+  onPermissionReject,
+  isPermissionLoading = false,
+  permissionError,
 }: ChatProps) {
   const activeStreams = useStreamStore((state) => state.activeStreams);
   const streamingMessageIds = useMemo(() => {
@@ -290,6 +310,17 @@ export const Chat = memo(function Chat({
 
   const lastBotMessageIndex = useMemo(() => findLastBotMessageIndex(messages), [messages]);
 
+  const canShowPermissionInline =
+    pendingPermissionRequest &&
+    onPermissionApprove &&
+    onPermissionReject &&
+    pendingPermissionRequest.tool_name !== 'AskUserQuestion' &&
+    pendingPermissionRequest.tool_name !== 'ExitPlanMode';
+  const lastBotIsStreaming =
+    lastBotMessageIndex >= 0 && streamingMessageIds.includes(messages[lastBotMessageIndex]?.id);
+  const showPermissionAtEnd =
+    canShowPermissionInline && (lastBotMessageIndex < 0 || lastBotIsStreaming);
+
   const handleSuggestionSelect = useCallback(
     (suggestion: string) => {
       setInputMessage(suggestion);
@@ -328,27 +359,65 @@ export const Chat = memo(function Chat({
               {messages.map((msg, index) => {
                 const messageIsStreaming = streamingMessageIds.includes(msg.id);
                 const isLastBotMessage = msg.is_bot && index === lastBotMessageIndex;
+                const showPermissionAfterThis =
+                  isLastBotMessage && !messageIsStreaming && canShowPermissionInline;
 
                 return (
-                  <Message
-                    key={msg.id}
-                    id={msg.id}
-                    content={msg.content}
-                    isBot={msg.is_bot}
-                    attachments={msg.attachments}
-                    copiedMessageId={copiedMessageId}
-                    onCopy={onCopy}
-                    isThisMessageStreaming={messageIsStreaming}
-                    isGloballyStreaming={isStreaming}
-                    createdAt={msg.created_at}
-                    modelId={msg.model_id}
-                    isLastBotMessageWithCommit={isLastBotMessage}
-                    onRestoreSuccess={onRestoreSuccess}
-                    isLastBotMessage={isLastBotMessage && !messageIsStreaming}
-                    onSuggestionSelect={isLastBotMessage ? handleSuggestionSelect : undefined}
-                  />
+                  <React.Fragment key={msg.id}>
+                    <Message
+                      id={msg.id}
+                      content={msg.content}
+                      isBot={msg.is_bot}
+                      attachments={msg.attachments}
+                      copiedMessageId={copiedMessageId}
+                      onCopy={onCopy}
+                      isThisMessageStreaming={messageIsStreaming}
+                      isGloballyStreaming={isStreaming}
+                      createdAt={msg.created_at}
+                      modelId={msg.model_id}
+                      isLastBotMessageWithCommit={isLastBotMessage}
+                      onRestoreSuccess={onRestoreSuccess}
+                      isLastBotMessage={isLastBotMessage && !messageIsStreaming}
+                      onSuggestionSelect={isLastBotMessage ? handleSuggestionSelect : undefined}
+                    />
+                    {showPermissionAfterThis && (
+                      <div className="px-4 sm:px-6">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          <div className="h-8 w-8 flex-shrink-0" />
+                          <div className="mb-3 mt-1 min-w-0 flex-1">
+                            <ToolPermissionInline
+                              request={pendingPermissionRequest}
+                              onApprove={onPermissionApprove}
+                              onReject={onPermissionReject}
+                              isLoading={isPermissionLoading}
+                              error={permissionError}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </React.Fragment>
                 );
               })}
+              {showPermissionAtEnd &&
+                pendingPermissionRequest &&
+                onPermissionApprove &&
+                onPermissionReject && (
+                  <div className="px-4 sm:px-6">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <div className="h-8 w-8 flex-shrink-0" />
+                      <div className="mb-3 mt-1 min-w-0 flex-1">
+                        <ToolPermissionInline
+                          request={pendingPermissionRequest}
+                          onApprove={onPermissionApprove}
+                          onReject={onPermissionReject}
+                          isLoading={isPermissionLoading}
+                          error={permissionError}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               {pendingMessages.map((pending) => (
                 <PendingMessage
                   key={pending.id}
