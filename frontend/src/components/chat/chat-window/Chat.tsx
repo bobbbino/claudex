@@ -103,6 +103,8 @@ export const Chat = memo(function Chat({
   isPermissionLoading = false,
   permissionError,
 }: ChatProps) {
+  const hasAttachments = (attachedFiles?.length ?? 0) > 0;
+  const isUploadingFiles = isLoading && !isStreaming && hasAttachments;
   const activeStreams = useStreamStore((state) => state.activeStreams);
   const streamingMessageIds = useMemo(() => {
     const ids: string[] = [];
@@ -462,7 +464,7 @@ export const Chat = memo(function Chat({
           </div>
         </div>
       </div>
-      <LoadingOverlay isOpen={isLoading && !isStreaming} message="Uploading files..." />
+      <LoadingOverlay isOpen={isUploadingFiles} message="Uploading files..." />
     </ChatProvider>
   );
 });
