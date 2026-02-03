@@ -40,6 +40,7 @@ export function Layout({
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
   const isMobile = useIsMobile();
+  const shouldPushContent = !!sidebarContent && sidebarOpen && !isMobile;
 
   useSwipeGesture({
     onSwipeRight: () => setSidebarOpen(true),
@@ -73,7 +74,8 @@ export function Layout({
 
           <main
             className={cn(
-              'relative min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-surface-secondary dark:bg-surface-dark-secondary',
+              'relative min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-surface-secondary transition-[padding] duration-500 ease-in-out dark:bg-surface-dark-secondary',
+              shouldPushContent ? 'pl-64' : 'pl-0',
               contentClassName,
             )}
           >
