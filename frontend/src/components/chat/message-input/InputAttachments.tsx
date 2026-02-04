@@ -6,6 +6,7 @@ interface InputAttachmentsProps {
   previewUrls: string[];
   onRemoveFile: (index: number) => void;
   onEditImage: (index: number) => void;
+  isUploading?: boolean;
 }
 
 export const InputAttachments = memo(function InputAttachments({
@@ -13,6 +14,7 @@ export const InputAttachments = memo(function InputAttachments({
   previewUrls,
   onRemoveFile,
   onEditImage,
+  isUploading = false,
 }: InputAttachmentsProps) {
   if (files.length === 0) return null;
 
@@ -24,6 +26,7 @@ export const InputAttachments = memo(function InputAttachments({
         onRemoveFile={onRemoveFile}
         onEditImage={onEditImage}
         compact={true}
+        isUploading={isUploading}
       />
     </div>
   );

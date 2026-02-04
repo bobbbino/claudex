@@ -123,6 +123,10 @@ export default {
       },
 
       keyframes: {
+        shimmer: {
+          '0%': { left: '-33%' },
+          '100%': { left: '100%' },
+        },
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -160,6 +164,7 @@ export default {
       },
 
       animation: {
+        shimmer: 'shimmer 1.5s ease-in-out infinite',
         fadeIn: 'fadeIn 0.3s ease-out forwards',
         'fade-in': 'fade-in 0.2s ease-out forwards',
         'fade-out': 'fade-out 0.2s ease-out forwards',

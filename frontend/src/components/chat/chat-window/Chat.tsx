@@ -16,7 +16,7 @@ import { ChatSkeleton } from './ChatSkeleton';
 import { LoadingIndicator } from './LoadingIndicator';
 import { ScrollButton } from './ScrollButton';
 import { ErrorMessage } from './ErrorMessage';
-import { Spinner, LoadingOverlay } from '@/components/ui';
+import { Spinner } from '@/components/ui';
 import type {
   Message as MessageType,
   FileStructure,
@@ -103,8 +103,6 @@ export const Chat = memo(function Chat({
   isPermissionLoading = false,
   permissionError,
 }: ChatProps) {
-  const hasAttachments = (attachedFiles?.length ?? 0) > 0;
-  const isUploadingFiles = isLoading && !isStreaming && hasAttachments;
   const activeStreams = useStreamStore((state) => state.activeStreams);
   const streamingMessageIds = useMemo(() => {
     const ids: string[] = [];
@@ -464,7 +462,6 @@ export const Chat = memo(function Chat({
           </div>
         </div>
       </div>
-      <LoadingOverlay isOpen={isUploadingFiles} message="Uploading files..." />
     </ChatProvider>
   );
 });
