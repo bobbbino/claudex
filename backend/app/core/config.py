@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     ]
 
     TRUSTED_PROXY_HOSTS: str | list[str] = "127.0.0.1"
+    DISABLE_PROXY_HEADERS: bool = False
 
     @field_validator("TRUSTED_PROXY_HOSTS", mode="before")
     @classmethod

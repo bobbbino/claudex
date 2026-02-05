@@ -26,6 +26,7 @@ const DEFAULT_ANTHROPIC_PROVIDER: Omit<CustomProvider, 'id' | 'auth_token'> = {
   base_url: null,
   enabled: true,
   models: [
+    { model_id: 'claude-opus-4-6', name: 'Claude Opus 4.6', enabled: true },
     { model_id: 'claude-opus-4-5', name: 'Claude Opus 4.5', enabled: true },
     { model_id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', enabled: true },
     { model_id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5', enabled: true },
@@ -38,11 +39,11 @@ const DEFAULT_OPENROUTER_PROVIDER: Omit<CustomProvider, 'id' | 'auth_token'> = {
   base_url: null,
   enabled: true,
   models: [
-    { model_id: 'openai/gpt-5.2', name: 'GPT-5.2', enabled: true },
-    { model_id: 'openai/gpt-5.1-codex', name: 'GPT-5.1 Codex', enabled: true },
-    { model_id: 'x-ai/grok-code-fast-1', name: 'Grok Code Fast', enabled: true },
-    { model_id: 'moonshotai/kimi-k2-thinking', name: 'Kimi K2 Thinking', enabled: true },
-    { model_id: 'minimax/minimax-m2', name: 'Minimax M2', enabled: true },
+    { model_id: 'google/gemini-3-pro-preview', name: 'Gemini 3 Pro', enabled: true },
+    { model_id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', enabled: true },
+    { model_id: 'x-ai/grok-4.1-fast', name: 'Grok 4.1 Fast', enabled: true },
+    { model_id: 'moonshotai/kimi-k2.5', name: 'Kimi K2.5 ', enabled: true },
+    { model_id: 'minimax/minimax-m2.1', name: 'Minimax M2.1', enabled: true },
     { model_id: 'deepseek/deepseek-v3.2', name: 'Deepseek V3.2', enabled: true },
   ],
 };
@@ -53,7 +54,8 @@ const DEFAULT_OPENAI_PROVIDER: Omit<CustomProvider, 'id' | 'auth_token'> = {
   base_url: null,
   enabled: true,
   models: [
-    { model_id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', enabled: true },
+    { model_id: 'gpt-5.3-codex', name: 'Codex 5.3', enabled: true },
+    { model_id: 'gpt-5.2-codex', name: 'Codex 5.2', enabled: true },
     { model_id: 'gpt-5.2', name: 'GPT-5.2', enabled: true },
   ],
 };
