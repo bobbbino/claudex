@@ -87,9 +87,7 @@ services:
       - claudex-sandbox-net
 
   api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/${IMAGE_OWNER:-mng-dev-ai}/claudex-backend:latest
     container_name: claudex-api
     restart: unless-stopped
     command: ["api"]
@@ -137,9 +135,7 @@ services:
           memory: 4G
 
   celery-beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/${IMAGE_OWNER:-mng-dev-ai}/claudex-backend:latest
     container_name: claudex-celery-beat
     restart: unless-stopped
     command: ["celery-beat"]
@@ -164,9 +160,7 @@ services:
           memory: 512M
 
   celery-worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/${IMAGE_OWNER:-mng-dev-ai}/claudex-backend:latest
     restart: unless-stopped
     command: ["celery-worker"]
     user: root
@@ -200,16 +194,14 @@ services:
           memory: 4G
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-      args:
-        - VITE_API_URL=https://api.${DOMAIN}
-        - VITE_WS_URL=wss://api.${DOMAIN}/api/v1/ws
+    image: ghcr.io/${IMAGE_OWNER:-mng-dev-ai}/claudex-frontend:latest
     container_name: claudex-frontend
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      - VITE_API_BASE_URL=https://api.${DOMAIN}/api/v1
+      - VITE_WS_URL=wss://api.${DOMAIN}/api/v1/ws
     networks:
       - claudex-proxy
     labels:
