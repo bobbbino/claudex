@@ -194,6 +194,39 @@ docker compose logs -f    # Logs
 
 For production deployment on a VPS, see the [Coolify Installation Guide](docs/coolify-installation-guide.md).
 
+### Docker Compose
+
+Two production-ready Docker Compose configurations are provided, both using pre-built images from GHCR.
+
+**Simple (direct port exposure):**
+
+```bash
+cp .env.simple.example .env
+# Edit .env — set SECRET_KEY at minimum
+docker compose -f docker-compose.simple.yml up -d
+```
+
+Frontend at `http://localhost:3000`, API at `http://localhost:8080`.
+
+**Traefik (HTTPS with Let's Encrypt):**
+
+```bash
+cp .env.traefik.example .env
+# Edit .env — set DOMAIN, ACME_EMAIL, POSTGRES_PASSWORD, SECRET_KEY
+docker compose -f docker-compose.traefik.yml up -d
+```
+
+Frontend at `https://DOMAIN`, API at `https://api.DOMAIN`. HTTP redirects to HTTPS automatically.
+
+Requires wildcard DNS pointing to your server. For example, if `DOMAIN=claudex.example.com`:
+
+```
+claudex.example.com       A  → your-server-ip
+*.claudex.example.com     A  → your-server-ip
+```
+
+**Fork builds:** Set `IMAGE_OWNER` in your `.env` to your GitHub username to use images built from your fork.
+
 ## API & Admin
 
 - **API Docs:** http://localhost:8080/api/v1/docs
