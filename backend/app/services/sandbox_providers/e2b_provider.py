@@ -236,9 +236,9 @@ class E2BSandboxProvider(SandboxProvider):
         pty = await self._retry_operation(
             sandbox.pty.create,
             size=E2BPtySize(rows=rows, cols=cols),
-            on_data=lambda data: on_data(normalize_e2b_pty_data(data))
-            if on_data
-            else None,
+            on_data=lambda data: (
+                on_data(normalize_e2b_pty_data(data)) if on_data else None
+            ),
             cwd=SANDBOX_HOME_DIR,
             envs={"TERM": TERMINAL_TYPE},
             timeout=None,

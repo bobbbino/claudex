@@ -5,6 +5,7 @@ import 'xterm/css/xterm.css';
 
 import { useUIStore } from '@/store';
 import { authService } from '@/services/authService';
+import { WS_BASE_URL } from '@/lib/api';
 
 import { getTerminalBackgroundClass } from '@/utils/terminal';
 import { useXterm } from '@/hooks/useXterm';
@@ -83,7 +84,7 @@ export const TerminalTab: FC<TerminalTabProps> = ({
     if (!token) return;
 
     const terminalParam = terminalId ? `?terminalId=${encodeURIComponent(terminalId)}` : '';
-    const wsUrl = `${import.meta.env.VITE_WS_URL}/${sandboxId}/terminal${terminalParam}`;
+    const wsUrl = `${WS_BASE_URL}/${sandboxId}/terminal${terminalParam}`;
 
     setSessionState('connecting');
 

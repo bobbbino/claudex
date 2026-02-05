@@ -200,8 +200,7 @@ class APIClient {
   }
 }
 
-export const getApiBaseUrl = () => {
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
-};
+export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
+export const WS_BASE_URL: string = import.meta.env.VITE_WS_URL;
 
-export const apiClient = new APIClient(getApiBaseUrl());
+export const apiClient = new APIClient(API_BASE_URL);

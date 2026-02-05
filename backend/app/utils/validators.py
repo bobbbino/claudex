@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from app.models.types import JSONList
 from app.services.provider import ProviderService
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from app.models.db_models import UserSettings
@@ -13,11 +16,16 @@ class APIKeyValidationError(ValueError):
     pass
 
 
-def normalize_json_list(value: JSONList | None) -> JSONList:
+def normalize_json_list(value: JSONList | str | None) -> JSONList:
     if value is None:
         return []
     if isinstance(value, list):
         return value
+    if isinstance(value, str):
+        logger.warning(
+            "normalize_json_list received a string instead of list — possible decryption failure, returning empty list"
+        )
+        return []
     raise ValueError(f"Expected list or None, got {type(value).__name__}")
 
 

@@ -38,6 +38,7 @@ from app.admin.views import (
     UserSettingsAdmin,
 )
 from prometheus_fastapi_instrumentator import Instrumentator
+
 from granian.utils.proxies import wrap_asgi_with_proxy_headers
 
 logger = logging.getLogger(__name__)
@@ -167,4 +168,5 @@ def create_application() -> FastAPI:
 app = create_application()
 Instrumentator().instrument(app).expose(app)
 
-app = wrap_asgi_with_proxy_headers(app, trusted_hosts=settings.TRUSTED_PROXY_HOSTS)
+if not settings.DISABLE_PROXY_HEADERS:
+    app = wrap_asgi_with_proxy_headers(app, trusted_hosts=settings.TRUSTED_PROXY_HOSTS)

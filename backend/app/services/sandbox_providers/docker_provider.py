@@ -567,7 +567,9 @@ class LocalDockerProvider(SandboxProvider):
             listening_ports=mapped_ports,
             url_builder=(
                 (
-                    lambda port: f"https://sandbox-{sandbox_id}-{port}.{self.config.sandbox_domain}"
+                    lambda port: (
+                        f"https://sandbox-{sandbox_id}-{port}.{self.config.sandbox_domain}"
+                    )
                 )
                 if self.config.sandbox_domain
                 else (lambda port: f"{self.config.preview_base_url}:{port_map[port]}")
