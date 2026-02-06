@@ -38,7 +38,7 @@ fi
 
 if [ "$MODE" = "celery-worker" ]; then
     echo "Starting Celery worker..."
-    CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-25}
+    CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-4}
     echo "Celery concurrency set to: $CELERY_CONCURRENCY"
     ensure_docker_network
 

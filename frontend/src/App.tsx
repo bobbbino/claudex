@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useEffect, Suspense, lazy } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import { Layout } from '@/components/layout';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore, useUIStore } from '@/store';
@@ -9,6 +9,7 @@ import { useGlobalStream, useStreamRestoration } from '@/hooks/useChatStreaming'
 import { authService } from '@/services/authService';
 import { toasterConfig } from '@/config/toaster';
 import { AuthRoute } from '@/components/routes/AuthRoute';
+import { API_BASE_URL } from '@/lib/api';
 
 const LandingPage = lazy(() =>
   import('@/pages/LandingPage').then((m) => ({ default: m.LandingPage })),
@@ -143,6 +144,7 @@ function AppContent() {
 
 export default function App() {
   const theme = useUIStore((state) => state.theme);
+  const [backendReady, setBackendReady] = useState<boolean | null>(null);
 
   useGlobalStream();
 
@@ -156,8 +158,52 @@ export default function App() {
     }
   }, [theme]);
 
+  useEffect(() => {
+    const isTauri =
+      typeof window !== 'undefined' &&
+      ('__TAURI__' in window || window.location.protocol === 'tauri:');
+    if (!isTauri) return;
+
+    let interval: number | undefined;
+    let cancelled = false;
+    const apiUrl = new URL(API_BASE_URL, window.location.origin);
+    const healthUrl = `${apiUrl.origin}/health`;
+
+    const check = async () => {
+      try {
+        const response = await fetch(healthUrl, { method: 'GET', cache: 'no-store' });
+        if (!cancelled) {
+          setBackendReady(response.ok);
+          if (response.ok && interval) {
+            window.clearInterval(interval);
+            interval = undefined;
+          }
+        }
+      } catch {
+        if (!cancelled) setBackendReady(false);
+      }
+    };
+
+    check();
+    interval = window.setInterval(check, 3000);
+
+    return () => {
+      cancelled = true;
+      if (interval) window.clearInterval(interval);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
+      {backendReady === false && (
+        <div className="fixed inset-x-0 top-0 z-[100] bg-yellow-500/90 px-4 py-2 text-center text-xs font-medium text-black">
+          Backend not running. Start it with{' '}
+          <code className="rounded bg-black/10 px-1 py-0.5 text-[11px]">
+            docker compose -f docker-compose.desktop.yml up -d --remove-orphans
+          </code>
+          .
+        </div>
+      )}
       <Toaster {...toasterConfig} />
       <AppContent />
     </BrowserRouter>

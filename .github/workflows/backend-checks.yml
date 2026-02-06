@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-pip-
       
       - name: Install linting tools
-        run: pip install ruff mypy types-redis types-PyYAML
+        run: pip install ruff==0.15.0 mypy types-redis types-PyYAML
 
       - name: Run ruff linting
         run: |

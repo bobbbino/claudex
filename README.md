@@ -15,7 +15,7 @@ Join our [Discord server](https://discord.gg/qVJBdPjr) to get help, share feedba
 ## Why Claudex?
 
 - **Multiple sandboxes** - Docker (local), E2B (cloud), or Modal (cloud).
-- **Use your own plans** - Claude Max, Z.AI Coding, or OpenRouter.
+- **Use your own plans** - Claude Max, OpenRouter, OpenAI, or custom providers.
 - **Full IDE experience** - VS Code in browser, terminal, file explorer.
 - **Extensible** - Skills, agents, slash commands, MCP servers.
 
@@ -34,6 +34,10 @@ docker compose up -d
 ```
 
 Open http://localhost:3000
+
+## Desktop (macOS)
+
+See [Desktop Setup](docs/desktop-local.md) to run Claudex as a native macOS app.
 
 ## Features
 

@@ -1,50 +1,41 @@
 services:
   postgres:
-    image: postgres:13-alpine
-    container_name: claudex-postgres
-    restart: always
-    command: -c max_connections=600
+    image: postgres:16
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_DB: claudex
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - claudex_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - claudex-sandbox-net
 
   redis:
-    image: redis:7-alpine
-    container_name: claudex-redis
-    restart: always
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--stop-writes-on-bgsave-error", "no"]
     ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
+      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  sandbox-setup:
-    image: docker:27-cli
-    container_name: claudex-sandbox-setup
-    restart: "no"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: sh -c "docker pull ${DOCKER_IMAGE:-ghcr.io/mng-dev-ai/claudex-sandbox:latest}"
+    networks:
+      - claudex-sandbox-net
 
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: claudex-api
     restart: unless-stopped
     command: ["api"]
     user: root
@@ -56,21 +47,27 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      sandbox-setup:
-        condition: service_completed_successfully
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "8081:8081"
     volumes:
       - ./backend:/app
       - ./storage:/app/storage
       - /app/__pycache__
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/claudex
       - REDIS_URL=redis://redis:6379/0
+      - BASE_URL=http://localhost:8081
+      - FRONTEND_URL=tauri://localhost
+      - ALLOWED_ORIGINS=tauri://localhost,http://localhost:3000
       - SECRET_KEY=${SECRET_KEY:-claudex_default_secret_key_for_development_only}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PORT=8081
+      - DOCKER_PERMISSION_API_URL=http://host.docker.internal:8081
+      - DISABLE_PROXY_HEADERS=true
+    networks:
+      - claudex-sandbox-net
 
   celery-worker:
     build:
@@ -87,28 +84,30 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      sandbox-setup:
-        condition: service_completed_successfully
     volumes:
       - ./backend:/app
       - ./storage:/app/storage
       - /app/__pycache__
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/claudex
       - REDIS_URL=redis://redis:6379/0
+      - BASE_URL=http://localhost:8081
+      - FRONTEND_URL=tauri://localhost
+      - ALLOWED_ORIGINS=tauri://localhost,http://localhost:3000
       - SECRET_KEY=${SECRET_KEY:-claudex_default_secret_key_for_development_only}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - CELERY_CONCURRENCY=${CELERY_CONCURRENCY:-4}
-    deploy:
-      replicas: ${CELERY_WORKER_REPLICAS:-8}
+      - PORT=8081
+      - DOCKER_PERMISSION_API_URL=http://host.docker.internal:8081
+      - DISABLE_PROXY_HEADERS=true
+    networks:
+      - claudex-sandbox-net
 
   celery-beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: claudex-celery-beat
     restart: unless-stopped
     command: ["celery-beat"]
     depends_on:
@@ -121,31 +120,23 @@ services:
       - ./storage:/app/storage
       - /app/__pycache__
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-postgres}
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/claudex
       - REDIS_URL=redis://redis:6379/0
+      - BASE_URL=http://localhost:8081
+      - FRONTEND_URL=tauri://localhost
+      - ALLOWED_ORIGINS=tauri://localhost,http://localhost:3000
       - SECRET_KEY=${SECRET_KEY:-claudex_default_secret_key_for_development_only}
       - PYTHONUNBUFFERED=1
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: claudex-frontend
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_URL=http://api:${BACKEND_PORT:-8080}
-      - VITE_WS_URL=ws://localhost:${BACKEND_PORT:-8080}/api/v1/ws
+      - PORT=8081
+      - DOCKER_PERMISSION_API_URL=http://host.docker.internal:8081
+      - DISABLE_PROXY_HEADERS=true
+    networks:
+      - claudex-sandbox-net
 
 volumes:
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
+  claudex_postgres_data:
+
+networks:
+  claudex-sandbox-net:
+    name: claudex-sandbox-net
